@@ -1,0 +1,1276 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-serif: 'Playfair Display', ui-serif, Georgia, serif;
+    --font-script: 'Dancing Script', cursive;
+
+    /* Gelap elegan + emas + navy */
+    --color-church-void: #030711;
+    --color-church-bg: #060d18;
+    --color-church-surface: #0a1524;
+    --color-church-card: #0f1f33;
+    --color-church-card-raised: #142a44;
+    --color-church-border: rgba(148, 163, 184, 0.18);
+    --color-church-muted: #94a3b8;
+    --color-church-fg: #e2e8f0;
+    --color-church-gold: #e8c547;
+    --color-church-gold-soft: #c9a32a;
+    --color-church-navy: #071018;
+    --color-church-navy-mid: #122a4a;
+    --color-church-forest: #0d3d2e;
+    --color-church-forest-mid: #145e45;
+    --color-church-nav-bg: #080f1a;
+
+    /* Alias lama (kompatibilitas view) */
+    --color-admin-navy: #071018;
+    --color-admin-navy-light: #1e3f6f;
+    --color-admin-surface: #0c1628;
+    --color-admin-surface-zebra: #0a1220;
+    --color-church-footer: #03060d;
+}
+
+@layer base {
+    :root {
+        /* Transisi & animasi halus (masuk halaman + hover kartu/tombol) */
+        --church-ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+        --church-ease-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+        --church-motion-enter: 1150ms;
+        --church-motion-enter-fast: 950ms;
+        --church-motion-hover: 620ms;
+        --church-motion-stagger: 72ms;
+        --church-motion-delay-base: 0.1s;
+        --church-motion-delay-admin: 0.14s;
+
+        /* Tinggi header sticky publik (logo + bar nav desktop) + safe area */
+        --church-site-header-sticky-top: calc(5.75rem + env(safe-area-inset-top, 0px));
+    }
+
+    @media (min-width: 768px) {
+        :root {
+            --church-site-header-sticky-top: calc(10.5rem + env(safe-area-inset-top, 0px));
+        }
+    }
+
+    body {
+        @apply antialiased;
+    }
+
+    input[type='checkbox'],
+    input[type='radio'] {
+        accent-color: var(--color-church-gold);
+    }
+
+    /* Panel admin: input gelap seperti tema (bukan putih / autofill biru muda) */
+    body.admin-layout-root {
+        color-scheme: dark;
+    }
+
+    body.admin-layout-root input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']),
+    body.admin-layout-root select,
+    body.admin-layout-root textarea {
+        @apply rounded-lg border border-white/15 px-4 py-3 text-sm shadow-inner placeholder:text-slate-500;
+        @apply focus:border-church-gold/50 focus:outline-none focus:ring-2 focus:ring-church-gold/25;
+        background-color: var(--color-church-surface) !important;
+        color: var(--color-church-fg) !important;
+        caret-color: var(--color-church-fg);
+    }
+
+    body.admin-layout-root input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']):-webkit-autofill,
+    body.admin-layout-root input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']):-webkit-autofill:hover,
+    body.admin-layout-root input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']):-webkit-autofill:focus,
+    body.admin-layout-root textarea:-webkit-autofill,
+    body.admin-layout-root textarea:-webkit-autofill:hover,
+    body.admin-layout-root textarea:-webkit-autofill:focus,
+    body.admin-layout-root select:-webkit-autofill,
+    body.admin-layout-root select:-webkit-autofill:hover,
+    body.admin-layout-root select:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 1000px var(--color-church-surface) inset !important;
+        box-shadow: 0 0 0 1000px var(--color-church-surface) inset !important;
+        -webkit-text-fill-color: var(--color-church-fg) !important;
+        caret-color: var(--color-church-fg);
+        transition: background-color 99999s ease-in-out 0s;
+    }
+}
+
+/* Animasi masuk konten halaman (hormati prefers-reduced-motion) */
+@keyframes church-content-rise {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 0.625rem, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes church-main-shell-rise {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 0.5rem, 0) scale(0.995);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+}
+
+@layer components {
+    /* Beranda: margin bawah hero agar ada jarak ke kartu visi */
+    .home-beranda-stack .home-hero-section {
+        margin-bottom: 4rem;
+    }
+
+    @media (min-width: 640px) {
+        .home-beranda-stack .home-hero-section {
+            margin-bottom: 5rem;
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .home-beranda-stack .home-hero-section {
+            margin-bottom: 7rem;
+        }
+    }
+
+    /* Album lightbox: gambar memakai sisa viewport (desktop & mobile), nav di tepi tidak menimpa */
+    #album-lightbox {
+        overscroll-behavior: contain;
+    }
+
+    #album-lightbox-stage {
+        min-height: 0;
+    }
+
+    #album-lightbox .album-lightbox-img {
+        max-height: min(
+            calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 8.5rem),
+            72dvh
+        );
+        width: auto;
+        height: auto;
+    }
+
+    @media (min-width: 768px) {
+        #album-lightbox .album-lightbox-img {
+            max-height: min(
+                calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 5.5rem),
+                90dvh
+            );
+        }
+    }
+
+    /* Galeri lightbox: gambar + caption + nav rapat di bawah gambar */
+    #gallery-lightbox {
+        overscroll-behavior: contain;
+    }
+
+    #gallery-lightbox .gallery-lightbox-img {
+        max-height: min(
+            calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 5.5rem),
+            72dvh
+        );
+        width: auto;
+        height: auto;
+    }
+
+    @media (min-width: 768px) {
+        #gallery-lightbox .gallery-lightbox-img {
+            max-height: min(
+                calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 5rem),
+                80dvh
+            );
+        }
+    }
+
+    /* Kartu halaman publik — tanpa shadow default agar glow emas hover terlihat */
+    .public-card-hover {
+        @apply shadow-none;
+        transition:
+            transform var(--church-motion-hover) var(--church-ease-smooth),
+            box-shadow var(--church-motion-hover) var(--church-ease-smooth),
+            border-color var(--church-motion-hover) var(--church-ease-smooth);
+        @apply hover:-translate-y-1 hover:border-church-gold/45 hover:shadow-xl hover:shadow-church-gold/30;
+    }
+
+    .public-card-link {
+        @apply relative overflow-hidden shadow-none;
+        transition:
+            transform var(--church-motion-hover) var(--church-ease-smooth),
+            box-shadow var(--church-motion-hover) var(--church-ease-smooth),
+            border-color var(--church-motion-hover) var(--church-ease-smooth);
+        @apply hover:-translate-y-1 hover:border-church-gold/45 hover:shadow-xl hover:shadow-church-gold/30;
+        @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-church-gold/50;
+    }
+
+    /* Glow abstrak emas di dalam kartu (bukan hijau) */
+    .public-card-hover.relative.overflow-hidden:not(.overflow-x-auto)::after,
+    .public-card-link::after,
+    .reg-form-card::after,
+    .reg-info-card::after,
+    .reg-page-hero::after,
+    body.admin-layout-root .admin-confirm-panel::after {
+        content: '';
+        pointer-events: none;
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background:
+            radial-gradient(
+                ellipse 70% 55% at 95% -5%,
+                color-mix(in srgb, var(--color-church-gold) 11%, transparent),
+                transparent 58%
+            ),
+            radial-gradient(
+                ellipse 55% 45% at 5% 105%,
+                color-mix(in srgb, var(--color-church-gold) 8%, transparent),
+                transparent 55%
+            ),
+            radial-gradient(
+                ellipse 40% 40% at 50% 50%,
+                color-mix(in srgb, var(--color-church-gold) 5%, transparent),
+                transparent 60%
+            );
+    }
+
+    .public-card-hover.relative.overflow-hidden:not(.overflow-x-auto) > *,
+    .public-card-link > *,
+    .reg-form-card > *,
+    .reg-info-card > *,
+    .reg-page-hero > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Tombol — efek hover sama dengan kartu (angkat + glow emas) */
+    .public-btn-hover,
+    .admin-btn,
+    .admin-btn-icon,
+    .reg-submit-btn {
+        @apply border border-transparent shadow-none;
+        transition:
+            transform var(--church-motion-hover) var(--church-ease-smooth),
+            box-shadow var(--church-motion-hover) var(--church-ease-smooth),
+            border-color var(--church-motion-hover) var(--church-ease-smooth),
+            background-color var(--church-motion-hover) var(--church-ease-smooth),
+            color var(--church-motion-hover) var(--church-ease-smooth);
+        @apply hover:-translate-y-1 hover:border-church-gold/45 hover:shadow-xl hover:shadow-church-gold/30;
+        @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-church-gold/50;
+    }
+
+    .public-btn-hover:disabled,
+    .public-btn-hover[disabled],
+    .reg-submit-btn:disabled,
+    .reg-submit-btn[disabled] {
+        @apply hover:translate-y-0 hover:border-transparent hover:shadow-none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .public-card-hover,
+        .public-card-link,
+        #album-thumbs .public-card-hover,
+        .reg-form-section,
+        .reg-form-card,
+        .reg-info-card,
+        .reg-page-hero,
+        .public-btn-hover,
+        .admin-btn,
+        .admin-btn-icon,
+        .reg-submit-btn {
+            @apply hover:translate-y-0;
+        }
+    }
+
+    .input-public-dark {
+        @apply mt-0 w-full rounded-lg border border-white/15 bg-church-surface px-3 py-2.5 text-sm text-church-fg shadow-inner transition placeholder:text-slate-500;
+        @apply focus:border-church-gold/50 focus:outline-none focus:ring-2 focus:ring-church-gold/25;
+    }
+
+    /* Ikon kalender native (kanan) pada input type="date" */
+    .input-public-dark--date {
+        @apply pr-10;
+        color-scheme: dark;
+    }
+
+    .input-public-dark--date::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 0.9;
+        filter: brightness(0) invert(1);
+    }
+
+    .input-public-dark--date:hover::-webkit-calendar-picker-indicator,
+    .input-public-dark--date:focus::-webkit-calendar-picker-indicator {
+        opacity: 1;
+    }
+
+    /* Angka: input teks biasa (tanpa spinner / scroll ubah nilai) */
+    .input-public-dark--numeric,
+    .input-public-dark[type='number'] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+    }
+
+    .input-public-dark--numeric::-webkit-outer-spin-button,
+    .input-public-dark--numeric::-webkit-inner-spin-button,
+    .input-public-dark[type='number']::-webkit-outer-spin-button,
+    .input-public-dark[type='number']::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .reg-field-label {
+        @apply mb-1.5 flex items-center gap-2 text-sm font-medium text-slate-300;
+    }
+
+    .reg-form-section {
+        @apply space-y-4 rounded-xl border border-white/[0.08] bg-church-surface/35 p-4 shadow-none ring-1 ring-white/5 sm:p-5;
+        transition:
+            transform var(--church-motion-hover) var(--church-ease-smooth),
+            box-shadow var(--church-motion-hover) var(--church-ease-smooth),
+            border-color var(--church-motion-hover) var(--church-ease-smooth);
+        @apply hover:-translate-y-1 hover:border-church-gold/45 hover:shadow-xl hover:shadow-church-gold/30;
+    }
+
+    .reg-form-section-head {
+        @apply mb-1 flex items-center gap-3 border-b border-white/10 pb-3;
+    }
+
+    .reg-form-section-icon {
+        @apply flex size-9 shrink-0 items-center justify-center rounded-lg bg-church-gold/15 text-sm text-church-gold ring-1 ring-church-gold/25;
+    }
+
+    /* Halaman pendaftaran — latar & kartu */
+    .reg-registration-page {
+        position: relative;
+        isolation: isolate;
+    }
+
+    .reg-registration-page > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    .reg-form-card {
+        @apply relative overflow-x-hidden rounded-2xl border border-white/10 shadow-none ring-1 ring-church-gold/15;
+        transition:
+            transform var(--church-motion-hover) var(--church-ease-smooth),
+            box-shadow var(--church-motion-hover) var(--church-ease-smooth),
+            border-color var(--church-motion-hover) var(--church-ease-smooth);
+        @apply hover:-translate-y-1 hover:border-church-gold/45 hover:shadow-xl hover:shadow-church-gold/30;
+        background: linear-gradient(165deg, rgb(15 31 51 / 0.98) 0%, rgb(10 21 36 / 0.95) 45%, rgb(6 13 24 / 0.98) 100%);
+    }
+
+    .reg-info-card,
+    .reg-page-hero {
+        @apply relative overflow-hidden shadow-none;
+        transition:
+            transform var(--church-motion-hover) var(--church-ease-smooth),
+            box-shadow var(--church-motion-hover) var(--church-ease-smooth),
+            border-color var(--church-motion-hover) var(--church-ease-smooth);
+        @apply hover:-translate-y-1 hover:border-church-gold/45 hover:shadow-xl hover:shadow-church-gold/30;
+    }
+
+    .reg-form-card-header {
+        @apply relative border-b border-white/10 px-5 py-4 sm:px-7 sm:py-5;
+        background: linear-gradient(90deg, rgb(7 16 24 / 0.9) 0%, rgb(201 163 42 / 0.12) 55%, transparent 100%);
+    }
+
+    .reg-form-card-body {
+        @apply relative space-y-6 px-5 py-6 sm:space-y-7 sm:px-7 sm:py-8;
+    }
+
+    .reg-submit-btn--ready:not(:disabled) {
+        @apply border-church-gold/35;
+    }
+
+    .alert-status-gold {
+        @apply rounded-2xl border border-church-gold/30 bg-church-gold/10 text-sm font-medium text-church-gold shadow-sm ring-1 ring-church-gold/20;
+        transition:
+            opacity 1s ease-out,
+            transform 1s ease-out;
+    }
+
+    .alert-status-gold[data-flash-dismissing] {
+        @apply pointer-events-none opacity-0;
+        transform: translateY(-0.35rem);
+    }
+
+    /* Dashboard — tema tombol selaras formulir pendaftaran publik */
+    .admin-btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold;
+        @apply focus-visible:ring-offset-2 focus-visible:ring-offset-church-card;
+    }
+
+    .admin-btn--primary {
+        @apply bg-gradient-to-r from-church-gold via-church-gold to-church-gold-soft px-5 py-2.5 text-church-navy;
+    }
+
+    .admin-btn--secondary {
+        @apply border border-white/15 bg-church-surface/80 px-5 py-2.5 font-medium text-slate-300 shadow-inner shadow-black/10;
+    }
+
+    .admin-btn--danger {
+        @apply border border-red-500/35 bg-red-500/10 px-5 py-2.5 font-medium text-red-400;
+    }
+
+    .admin-btn--danger-solid {
+        @apply bg-gradient-to-r from-red-600 to-red-500 px-5 py-2.5 text-white;
+    }
+
+    .admin-btn--neutral {
+        @apply border border-white/15 bg-church-navy-mid/90 px-4 py-2 font-medium text-white;
+    }
+
+    .admin-btn--sm {
+        @apply rounded-lg px-3 py-1.5 text-xs;
+    }
+
+    .admin-btn-icon {
+        @apply inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-sm;
+        @apply focus-visible:ring-offset-1 focus-visible:ring-offset-church-card;
+    }
+
+    /* Dashboard — body main: satu kartu profil membungkus seluruh konten halaman */
+    body.admin-layout-root .admin-main-body.public-card-hover::before,
+    body.admin-layout-root .admin-main-body.public-card-hover::after {
+        content: none;
+        display: none;
+    }
+
+    /* Kartu dalam body: panel dalam, tanpa garis gradien ganda */
+    body.admin-layout-root .admin-main-body__content .public-card-hover:not(.schedule-row):not(.beranda-section-tab)::before,
+    body.admin-layout-root .admin-main-body__content .public-card-link::before,
+    body.admin-layout-root .admin-main-body__content .public-card-hover:not(.schedule-row)::after,
+    body.admin-layout-root .admin-main-body__content .public-card-link::after {
+        content: none;
+        display: none;
+    }
+
+    body.admin-layout-root .admin-main-body__content .public-card-hover:not(.schedule-row):not(.beranda-section-tab):not(.cms-hero-button-row):not(.cms-nav-row):not(.cms-sidebar-card-row),
+    body.admin-layout-root .admin-main-body__content form.public-card-hover,
+    body.admin-layout-root .admin-main-body__content dl.public-card-hover,
+    body.admin-layout-root .admin-main-body__content .admin-panel,
+    body.admin-layout-root .admin-main-body__content fieldset[class*='border-white/10'][class*='bg-church-surface'],
+    body.admin-layout-root .admin-main-body__content div[class*='border-white/10'][class*='bg-church-surface/'] {
+        @apply rounded-xl border-white/10 bg-church-surface/35 ring-1 ring-white/10;
+    }
+
+    body.admin-layout-root .admin-main-body__content .public-card-link {
+        @apply overflow-hidden rounded-2xl ring-1 ring-church-gold/15;
+    }
+
+    /* Kartu utama dashboard — tidak ikut hover angkat (hanya isi di dalamnya) */
+    body.admin-layout-root .admin-main-body.public-card-hover {
+        transition: opacity var(--church-motion-enter) var(--church-ease-smooth);
+    }
+
+    body.admin-layout-root .admin-main-body.public-card-hover:hover {
+        transform: none;
+        box-shadow: none;
+        border-color: rgb(255 255 255 / 0.1);
+    }
+
+    body.admin-layout-root main.admin-main > .admin-main-body {
+        animation: church-main-shell-rise var(--church-motion-enter) var(--church-ease-smooth) both;
+        backface-visibility: hidden;
+    }
+
+    body.admin-layout-root .admin-main-body > .pointer-events-none {
+        animation: none !important;
+    }
+
+    body.admin-layout-root main.admin-main:has(> .admin-main-body) > .admin-main-body > * {
+        animation: none !important;
+    }
+
+    /* Halaman publik — gaya kartu profil langsung pada tag <body> */
+    body.public-layout-body {
+        @apply relative isolate bg-church-card;
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-church-gold) 12%, transparent);
+        animation: church-main-shell-rise var(--church-motion-enter) var(--church-ease-smooth) both;
+        backface-visibility: hidden;
+    }
+
+    body.public-layout-body::before {
+        content: '';
+        display: block;
+        height: 0.25rem;
+        width: 100%;
+        flex-shrink: 0;
+        background: linear-gradient(
+            to right,
+            var(--color-church-gold),
+            var(--color-church-gold-soft),
+            var(--color-church-gold)
+        );
+        position: relative;
+        z-index: 60;
+    }
+
+    body.public-layout-body::after {
+        content: '';
+        pointer-events: none;
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background:
+            radial-gradient(
+                ellipse 70% 55% at 95% -5%,
+                color-mix(in srgb, var(--color-church-gold) 11%, transparent),
+                transparent 58%
+            ),
+            radial-gradient(
+                ellipse 55% 45% at 5% 105%,
+                color-mix(in srgb, var(--color-church-gold) 8%, transparent),
+                transparent 55%
+            ),
+            radial-gradient(
+                ellipse 45% 40% at 50% 45%,
+                color-mix(in srgb, var(--color-church-gold) 5%, transparent),
+                transparent 60%
+            );
+    }
+
+    body.public-layout-body > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    body.public-layout-body #konten-utama .public-card-hover:not(.schedule-row)::before,
+    body.public-layout-body #konten-utama .public-card-link::before,
+    body.public-layout-body #konten-utama .public-card-hover:not(.schedule-row)::after,
+    body.public-layout-body #konten-utama .public-card-link::after {
+        content: none;
+        display: none;
+    }
+
+    body.public-layout-body #konten-utama .public-card-hover:not(.schedule-row):not(.public-card-link),
+    body.public-layout-body #konten-utama form.public-card-hover,
+    body.public-layout-body #konten-utama dl.public-card-hover {
+        @apply rounded-xl border-white/10 bg-church-surface/35 ring-1 ring-white/10;
+    }
+
+    body.public-layout-body #konten-utama .public-card-link {
+        @apply overflow-hidden rounded-2xl ring-1 ring-church-gold/15;
+    }
+
+    body.admin-layout-root .admin-confirm-panel {
+        @apply relative overflow-hidden rounded-2xl border border-white/10 bg-church-card ring-1 ring-church-gold/10;
+    }
+
+    body.admin-layout-root .admin-confirm-panel::before {
+        content: '';
+        display: block;
+        height: 0.25rem;
+        width: 100%;
+        background: linear-gradient(
+            to right,
+            var(--color-church-gold),
+            var(--color-church-gold-soft),
+            var(--color-church-gold)
+        );
+    }
+
+    /* Dashboard desktop — sidebar navigasi selaras kartu profil */
+    @media (min-width: 768px) {
+        body.admin-layout-root .admin-sidebar {
+            @apply relative overflow-hidden border-r border-white/10 bg-church-card shadow-xl ring-1 ring-inset ring-church-gold/10;
+        }
+
+        body.admin-layout-root .admin-sidebar::before {
+            content: '';
+            display: block;
+            height: 0.25rem;
+            width: 100%;
+            flex-shrink: 0;
+            background: linear-gradient(
+                to right,
+                var(--color-church-gold),
+                var(--color-church-gold-soft),
+                var(--color-church-gold)
+            );
+            position: relative;
+            z-index: 2;
+        }
+
+        body.admin-layout-root .admin-sidebar::after {
+            content: '';
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 100% 0%, rgb(232 185 35 / 0.12), transparent 55%),
+                radial-gradient(ellipse 60% 45% at 0% 100%, rgb(232 185 35 / 0.08), transparent 50%),
+                radial-gradient(ellipse 45% 40% at 50% 40%, rgb(232 185 35 / 0.05), transparent 60%);
+        }
+
+        body.admin-layout-root .admin-sidebar__inner {
+            @apply flex min-h-0 flex-1 flex-col;
+        }
+
+        body.admin-layout-root .admin-nav-link,
+        body.admin-layout-root .admin-nav-sublink {
+            transition:
+                transform var(--church-motion-hover) var(--church-ease-smooth),
+                box-shadow var(--church-motion-hover) var(--church-ease-smooth),
+                border-color var(--church-motion-hover) var(--church-ease-smooth),
+                background-color var(--church-motion-hover) var(--church-ease-smooth),
+                color var(--church-motion-hover) var(--church-ease-smooth);
+        }
+
+        body.admin-layout-root .admin-nav-link:hover,
+        body.admin-layout-root .admin-nav-sublink:hover {
+            @apply -translate-y-px shadow-lg shadow-church-gold/20;
+        }
+
+        body.admin-layout-root .admin-nav-group[open] > summary {
+            @apply border-church-gold/25 bg-church-surface/50 text-church-fg;
+        }
+
+        body.admin-layout-root .admin-sidebar__footer-btn:hover {
+            @apply border-church-gold/35;
+        }
+    }
+
+    .admin-btn-icon--view {
+        @apply border-white/15 bg-church-surface/90 text-church-gold;
+    }
+
+    .admin-btn-icon--edit {
+        @apply border-church-gold/25 bg-church-gold/10 text-church-gold;
+    }
+
+    .admin-btn-icon--delete {
+        @apply border-red-500/30 bg-red-500/10 text-red-400;
+    }
+
+    .admin-table-actions {
+        @apply flex flex-wrap items-center gap-1.5;
+    }
+
+    .reg-registration-panels {
+        gap: 1.75rem;
+    }
+
+    @media (min-width: 1024px) {
+        .reg-registration-panels {
+            gap: 2.5rem;
+        }
+    }
+
+    /* Pendaftaran: mobile atas info / bawah form; desktop kiri form / kanan info */
+    .reg-registration-page,
+    .reg-registration-panels,
+    .reg-registration-panel-form,
+    .reg-registration-panel-info,
+    .reg-jemaat-page,
+    .reg-jemaat-panels,
+    .reg-jemaat-panel-form,
+    .reg-jemaat-panel-info {
+        overflow: visible;
+        max-height: none;
+        height: auto;
+    }
+
+    .reg-registration-panels,
+    .reg-jemaat-panels {
+        @apply min-w-0;
+    }
+
+    .reg-registration-panel-info,
+    .reg-jemaat-panel-info {
+        order: 1;
+    }
+
+    .reg-registration-panel-form,
+    .reg-jemaat-panel-form {
+        order: 2;
+    }
+
+    @media (min-width: 1024px) {
+        .reg-registration-panels,
+        .reg-jemaat-panels {
+            align-items: stretch;
+        }
+
+        .reg-registration-panel-form,
+        .reg-jemaat-panel-form {
+            order: 1;
+        }
+
+        .reg-registration-panel-info,
+        .reg-jemaat-panel-info {
+            order: 2;
+        }
+
+        .reg-registration-panel-info,
+        .reg-jemaat-panel-info {
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+        }
+
+        .reg-registration-panel-info-sticky,
+        .reg-jemaat-panel-info-sticky {
+            position: sticky;
+            top: calc(var(--church-site-header-sticky-top) + 0.75rem);
+            align-self: flex-start;
+            width: 100%;
+        }
+    }
+
+    .church-content-animate .reg-registration-page > nav,
+    .church-content-animate .reg-registration-page > .reg-registration-panels,
+    .church-content-animate .reg-jemaat-page > nav,
+    .church-content-animate .reg-jemaat-page > .reg-jemaat-panels {
+        animation: none !important;
+    }
+
+    .church-content-animate > * {
+        animation: church-content-rise var(--church-motion-enter) var(--church-ease-smooth) both;
+        animation-delay: calc(var(--church-motion-delay-base) + var(--church-stagger-index, 0) * var(--church-motion-stagger));
+        backface-visibility: hidden;
+    }
+
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * {
+        animation: none;
+    }
+
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > * {
+        animation: church-content-rise var(--church-motion-enter-fast) var(--church-ease-smooth) both;
+        animation-delay: calc(var(--church-motion-delay-base) + var(--church-stagger-index, 0) * var(--church-motion-stagger));
+        backface-visibility: hidden;
+    }
+
+    .admin-main-body__content.church-content-animate > * {
+        animation: church-content-rise var(--church-motion-enter-fast) var(--church-ease-smooth) both;
+        animation-delay: calc(var(--church-motion-delay-admin) + var(--church-stagger-index, 0) * var(--church-motion-stagger));
+        backface-visibility: hidden;
+    }
+
+    .church-content-animate > *:nth-child(1),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(1),
+    .admin-main-body__content.church-content-animate > *:nth-child(1) {
+        --church-stagger-index: 0;
+    }
+    .church-content-animate > *:nth-child(2),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(2),
+    .admin-main-body__content.church-content-animate > *:nth-child(2) {
+        --church-stagger-index: 1;
+    }
+    .church-content-animate > *:nth-child(3),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(3),
+    .admin-main-body__content.church-content-animate > *:nth-child(3) {
+        --church-stagger-index: 2;
+    }
+    .church-content-animate > *:nth-child(4),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(4),
+    .admin-main-body__content.church-content-animate > *:nth-child(4) {
+        --church-stagger-index: 3;
+    }
+    .church-content-animate > *:nth-child(5),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(5),
+    .admin-main-body__content.church-content-animate > *:nth-child(5) {
+        --church-stagger-index: 4;
+    }
+    .church-content-animate > *:nth-child(6),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(6),
+    .admin-main-body__content.church-content-animate > *:nth-child(6) {
+        --church-stagger-index: 5;
+    }
+    .church-content-animate > *:nth-child(7),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(7),
+    .admin-main-body__content.church-content-animate > *:nth-child(7) {
+        --church-stagger-index: 6;
+    }
+    .church-content-animate > *:nth-child(8),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(8),
+    .admin-main-body__content.church-content-animate > *:nth-child(8) {
+        --church-stagger-index: 7;
+    }
+    .church-content-animate > *:nth-child(9),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(9),
+    .admin-main-body__content.church-content-animate > *:nth-child(9) {
+        --church-stagger-index: 8;
+    }
+    .church-content-animate > *:nth-child(10),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(10),
+    .admin-main-body__content.church-content-animate > *:nth-child(10) {
+        --church-stagger-index: 9;
+    }
+    .church-content-animate > *:nth-child(11),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(11),
+    .admin-main-body__content.church-content-animate > *:nth-child(11) {
+        --church-stagger-index: 10;
+    }
+    .church-content-animate > *:nth-child(12),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(12),
+    .admin-main-body__content.church-content-animate > *:nth-child(12) {
+        --church-stagger-index: 11;
+    }
+    .church-content-animate > *:nth-child(13),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(13),
+    .admin-main-body__content.church-content-animate > *:nth-child(13) {
+        --church-stagger-index: 12;
+    }
+    .church-content-animate > *:nth-child(14),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(14),
+    .admin-main-body__content.church-content-animate > *:nth-child(14) {
+        --church-stagger-index: 13;
+    }
+    .church-content-animate > *:nth-child(15),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(15),
+    .admin-main-body__content.church-content-animate > *:nth-child(15) {
+        --church-stagger-index: 14;
+    }
+    .church-content-animate > *:nth-child(16),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(16),
+    .admin-main-body__content.church-content-animate > *:nth-child(16) {
+        --church-stagger-index: 15;
+    }
+    .church-content-animate > *:nth-child(17),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(17),
+    .admin-main-body__content.church-content-animate > *:nth-child(17) {
+        --church-stagger-index: 16;
+    }
+    .church-content-animate > *:nth-child(18),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(18),
+    .admin-main-body__content.church-content-animate > *:nth-child(18) {
+        --church-stagger-index: 17;
+    }
+    .church-content-animate > *:nth-child(19),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(19),
+    .admin-main-body__content.church-content-animate > *:nth-child(19) {
+        --church-stagger-index: 18;
+    }
+    .church-content-animate > *:nth-child(20),
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *:nth-child(20),
+    .admin-main-body__content.church-content-animate > *:nth-child(20) {
+        --church-stagger-index: 19;
+    }
+
+    /* Paragraf & blok di dalam artikel CMS (satu level di bawah artikel) */
+    .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) article > * {
+        animation: church-content-rise var(--church-motion-enter-fast) var(--church-ease-smooth) both;
+        animation-delay: 0.22s;
+        backface-visibility: hidden;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .church-content-animate > *,
+        .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) > * > *,
+        .church-content-animate:has(> :only-child):not(:has(> .admin-main-body)) article > *,
+        .admin-main-body__content.church-content-animate > *,
+        body.admin-layout-root main.admin-main > .admin-main-body,
+        body.public-layout-body {
+            animation: none !important;
+        }
+    }
+
+    /* Shell admin: mobile scroll halaman; desktop scroll di kartu konten */
+    body.admin-layout-root {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: grid;
+        grid-template-rows: auto auto;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    @media (max-width: 767.98px) {
+        html:has(body.admin-layout-root) {
+            height: auto;
+            min-height: 100%;
+            min-height: 100dvh;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: clip;
+        }
+
+        body.admin-layout-root {
+            width: 100%;
+            max-width: 100%;
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);
+            overflow-x: clip;
+        }
+
+        body.admin-layout-root > .admin-layout-shell,
+        body.admin-layout-root .admin-layout-main,
+        body.admin-layout-root main.admin-main,
+        body.admin-layout-root .admin-main-body,
+        body.admin-layout-root .admin-main-body__content {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+
+        body.admin-layout-root > .admin-layout-shell {
+            height: auto;
+        }
+
+        body.admin-layout-root .admin-layout-main {
+            height: auto;
+            overflow: visible;
+        }
+
+        body.admin-layout-root main.admin-main {
+            overflow: visible;
+        }
+
+        body.admin-layout-root .admin-main-body {
+            overflow-x: clip;
+            overflow-y: visible;
+        }
+
+        body.admin-layout-root .admin-main-body__content {
+            overflow-y: visible;
+        }
+
+        body.admin-layout-root .admin-main-body > .pointer-events-none {
+            display: none;
+        }
+
+        body.admin-layout-root .admin-main-body__content {
+            padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 0px));
+        }
+
+        body.admin-layout-root .admin-main-body__content > * {
+            max-width: 100%;
+            min-width: 0;
+        }
+
+        body.admin-layout-root .admin-main-body__content .admin-data-table-wrap,
+        body.admin-layout-root .admin-main-body__content > .overflow-x-auto.public-card-hover {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        body.admin-layout-root .admin-main-body__content .admin-data-table-wrap table,
+        body.admin-layout-root .admin-main-body__content > .overflow-x-auto.public-card-hover table {
+            width: max-content;
+            min-width: 100%;
+        }
+
+        body.admin-layout-root .admin-main-body__content .cms-fa-icon-field {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        body.admin-layout-root .admin-main-body__content .cms-fa-icon-field > .mt-1.flex {
+            min-width: 0;
+        }
+
+        body.admin-layout-root .admin-main-body__content .cms-fa-icon-field [data-cms-fa-icon-input] {
+            min-width: 0;
+            overflow-x: auto;
+        }
+    }
+
+    @media (min-width: 768px) {
+        html:has(body.admin-layout-root) {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body.admin-layout-root {
+            height: 100dvh;
+            max-height: 100dvh;
+            grid-template-rows: minmax(0, 1fr);
+            overflow: hidden;
+        }
+
+        body.admin-layout-root > .admin-layout-shell {
+            align-items: stretch;
+            height: 100%;
+            max-height: 100dvh;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* Desktop: scroll satu kolom (kartu + footer), bukan nested di dalam kartu */
+        body.admin-layout-root .admin-layout-main {
+            min-height: 0;
+            overflow-x: clip;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+        }
+
+        body.admin-layout-root main.admin-main,
+        body.admin-layout-root .admin-main-body,
+        body.admin-layout-root .admin-main-body.public-card-hover,
+        body.admin-layout-root .admin-main-body__content {
+            min-height: 0;
+            overflow: visible;
+        }
+
+        body.admin-layout-root > .admin-layout-shell > .admin-sidebar {
+            position: sticky;
+            top: 0;
+            align-self: flex-start;
+            height: 100dvh;
+            max-height: 100dvh;
+        }
+    }
+
+    body.admin-layout-root .admin-dashboard-page {
+        min-width: 0;
+    }
+
+    @media (max-width: 767.98px) {
+        body.admin-layout-root .admin-dashboard-page {
+            padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+        }
+    }
+
+    body.admin-layout-root > .admin-layout-shell {
+        min-height: 0;
+    }
+
+    /*
+     * Area konten admin: label/teks tidak menempel ke garis kotak fieldset atau border input.
+     * !important mengalahkan utilitas px-2 / px-3 di Blade agar padding konsisten.
+     */
+    body.admin-layout-root main.church-content-animate label:not(.sr-only) {
+        display: block;
+        padding-inline: 0.375rem;
+        padding-top: 0.125rem;
+        margin-bottom: 0.75rem;
+    }
+
+    body.admin-layout-root main.church-content-animate label:not(.sr-only) + input,
+    body.admin-layout-root main.church-content-animate label:not(.sr-only) + select,
+    body.admin-layout-root main.church-content-animate label:not(.sr-only) + textarea {
+        margin-top: 0;
+    }
+
+    body.admin-layout-root main.church-content-animate fieldset > legend {
+        display: block;
+        padding-inline: 0.375rem;
+        padding-bottom: 0.25rem;
+        margin-bottom: 0.75rem;
+    }
+
+    body.admin-layout-root main.church-content-animate input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']),
+    body.admin-layout-root main.church-content-animate select,
+    body.admin-layout-root main.church-content-animate textarea {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        padding-top: 0.75rem !important;
+        padding-bottom: 0.75rem !important;
+        min-height: 2.75rem;
+    }
+
+    body.admin-layout-root main.church-content-animate textarea {
+        min-height: 0;
+    }
+
+    body.admin-layout-root main.church-content-animate input[type='file'] {
+        padding: 0.75rem 1rem !important;
+    }
+
+    .church-cms-body ul,
+    .church-cms-body ol {
+        margin-block: 0 1rem;
+        padding-left: 1.5rem;
+        list-style-position: outside;
+    }
+
+    .church-cms-body ul {
+        list-style-type: disc;
+    }
+
+    .church-cms-body ol {
+        list-style-type: decimal;
+    }
+
+    .church-cms-body ol[type='i'] {
+        list-style-type: lower-roman;
+    }
+
+    .church-cms-body ol[type='I'] {
+        list-style-type: upper-roman;
+    }
+
+    .church-cms-body ol[type='a'] {
+        list-style-type: lower-alpha;
+    }
+
+    .church-cms-body ol[type='A'] {
+        list-style-type: upper-alpha;
+    }
+
+    .church-cms-body li {
+        display: list-item;
+        margin-bottom: 0.25rem;
+    }
+
+}
+
+/* Modal unggah galeri — animasi proses */
+@keyframes gallery-upload-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes gallery-upload-pulse-ring {
+    0%,
+    100% {
+        transform: scale(0.92);
+        opacity: 0.45;
+    }
+    50% {
+        transform: scale(1.08);
+        opacity: 0.9;
+    }
+}
+
+@keyframes gallery-upload-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+@keyframes gallery-upload-dot-bounce {
+    0%,
+    80%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.35;
+    }
+    40% {
+        transform: translateY(-0.35rem);
+        opacity: 1;
+    }
+}
+
+.gallery-upload-modal__spinner {
+    animation: gallery-upload-spin 0.85s linear infinite;
+}
+
+.gallery-upload-modal__ring {
+    animation: gallery-upload-pulse-ring 1.6s ease-in-out infinite;
+}
+
+.gallery-upload-modal__progress-fill {
+    background: linear-gradient(
+        90deg,
+        rgb(212 175 55 / 0.35) 0%,
+        rgb(212 175 55) 45%,
+        rgb(255 230 150) 55%,
+        rgb(212 175 55 / 0.35) 100%
+    );
+    background-size: 200% 100%;
+    transition: width 0.2s ease-out;
+}
+
+.gallery-upload-modal__progress-fill--active {
+    animation: gallery-upload-shimmer 1.4s linear infinite;
+}
+
+.gallery-upload-modal__dot {
+    animation: gallery-upload-dot-bounce 1.2s ease-in-out infinite;
+}
+
+.gallery-upload-modal__dot:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.gallery-upload-modal__dot:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+/* Galeri admin — hover emas seperti halaman publik /galeri */
+.gallery-thumb-card {
+    @apply shadow-none;
+    transition:
+        transform var(--church-motion-hover) var(--church-ease-smooth),
+        box-shadow var(--church-motion-hover) var(--church-ease-smooth),
+        border-color var(--church-motion-hover) var(--church-ease-smooth);
+    @apply hover:-translate-y-1 hover:border-church-gold/45 hover:shadow-xl hover:shadow-church-gold/30;
+}
+
+.gallery-thumb-card::after {
+    content: '';
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+        radial-gradient(
+            ellipse 70% 55% at 95% -5%,
+            color-mix(in srgb, var(--color-church-gold) 11%, transparent),
+            transparent 58%
+        ),
+        radial-gradient(
+            ellipse 55% 45% at 5% 105%,
+            color-mix(in srgb, var(--color-church-gold) 8%, transparent),
+            transparent 55%
+        ),
+        radial-gradient(
+            ellipse 40% 40% at 50% 50%,
+            color-mix(in srgb, var(--color-church-gold) 5%, transparent),
+            transparent 60%
+        );
+}
+
+.gallery-thumb-card > *:not(.gallery-card-actions):not(.gallery-thumb-caption) {
+    position: relative;
+    z-index: 1;
+}
+
+.gallery-thumb-card .gallery-card-actions {
+    z-index: 20;
+}
+
+/* Galeri admin — nama foto & tombol edit/hapus tampil saat hover kartu */
+@media (hover: hover) {
+    .gallery-thumb-card .gallery-card-actions,
+    .gallery-thumb-card .gallery-thumb-caption {
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .gallery-thumb-card:hover .gallery-card-actions,
+    .gallery-thumb-card:hover .gallery-thumb-caption,
+    .gallery-thumb-card:focus-within .gallery-card-actions,
+    .gallery-thumb-card:focus-within .gallery-thumb-caption,
+    .group:hover .gallery-card-actions,
+    .group:hover .gallery-thumb-caption,
+    .group:focus-within .gallery-card-actions,
+    .group:focus-within .gallery-thumb-caption {
+        opacity: 1;
+        pointer-events: none;
+    }
+
+    .gallery-thumb-card:hover .gallery-card-actions,
+    .gallery-thumb-card:focus-within .gallery-card-actions,
+    .group:hover .gallery-card-actions,
+    .group:focus-within .gallery-card-actions {
+        pointer-events: auto;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gallery-thumb-card {
+        @apply hover:translate-y-0;
+    }
+}

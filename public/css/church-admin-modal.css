@@ -1,0 +1,364 @@
+html.church-admin-popup-scroll-lock,
+html.church-admin-popup-scroll-lock body {
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+@keyframes church-admin-modal-surface-in {
+    from {
+        opacity: 0;
+        transform: translateY(0.5rem) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* Popup overlay (bukan <dialog>): layar penuh, scrim + panel benar-benar di tengah. */
+.church-admin-popup[hidden] {
+    display: none !important;
+}
+
+.church-admin-popup:not([hidden]) {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    box-sizing: border-box;
+    pointer-events: none;
+    --church-admin-modal-vreserve: max(1.25rem, env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 0.75rem);
+}
+
+.church-admin-popup--confirm:not([hidden]) {
+    z-index: 210;
+}
+
+.church-admin-popup__scrim {
+    grid-area: 1 / 1;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    pointer-events: auto;
+    background: rgba(2, 6, 23, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.church-admin-popup__align {
+    grid-area: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: max(0.5rem, env(safe-area-inset-top, 0px)) max(0.5rem, env(safe-area-inset-right, 0px)) max(0.5rem, env(safe-area-inset-bottom, 0px)) max(0.5rem, env(safe-area-inset-left, 0px));
+    pointer-events: none;
+}
+
+@media (min-width: 640px) {
+    .church-admin-popup__align {
+        padding: max(1rem, env(safe-area-inset-top, 0px)) max(1rem, env(safe-area-inset-right, 0px)) max(1rem, env(safe-area-inset-bottom, 0px)) max(1rem, env(safe-area-inset-left, 0px));
+    }
+}
+
+.church-admin-popup__align--narrow {
+    align-items: center;
+}
+
+.church-admin-dialog__surface {
+    pointer-events: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: min(72rem, 100%);
+    max-height: min(92dvh, 56rem);
+    overflow: hidden;
+    border-radius: 0.875rem;
+    border: 1px solid var(--color-church-border);
+    background: linear-gradient(165deg, var(--color-church-card-raised) 0%, var(--color-church-card) 42%, var(--color-church-card) 100%);
+    color: var(--color-church-fg);
+    box-shadow:
+        0 0 0 1px rgba(232, 197, 71, 0.08),
+        0 25px 50px -12px rgba(0, 0, 0, 0.55),
+        0 0 80px -20px rgba(18, 42, 74, 0.45);
+}
+
+.church-admin-dialog__surface::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 3px;
+    border-radius: 0.875rem 0.875rem 0 0;
+    background: linear-gradient(90deg, transparent, var(--color-church-gold) 22%, var(--color-church-gold-soft) 50%, var(--color-church-gold) 78%, transparent);
+    opacity: 0.85;
+    pointer-events: none;
+}
+
+@media (min-width: 640px) {
+    .church-admin-dialog__surface {
+        border-radius: 1rem;
+    }
+
+    .church-admin-dialog__surface::before {
+        border-radius: 1rem 1rem 0 0;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .church-admin-popup:not([hidden]) .church-admin-dialog__surface {
+        animation: church-admin-modal-surface-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+}
+
+.church-admin-dialog__surface--iframe {
+    width: min(72rem, calc(100vw - max(1rem, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px) + 0.75rem)));
+    min-height: min(48dvh, 20rem);
+    max-height: min(56rem, calc(100dvh - var(--church-admin-modal-vreserve, 2rem)));
+    height: min(90dvh, calc(100dvh - var(--church-admin-modal-vreserve, 2rem)));
+}
+
+@media (min-width: 640px) {
+    .church-admin-dialog__surface--iframe {
+        min-height: min(52dvh, 24rem);
+        max-height: min(52rem, calc(100dvh - var(--church-admin-modal-vreserve, 2.5rem)));
+        height: min(88dvh, calc(100dvh - var(--church-admin-modal-vreserve, 2.5rem)));
+    }
+}
+
+@media (min-width: 1024px) {
+    .church-admin-dialog__surface--iframe {
+        max-height: min(50rem, calc(100dvh - var(--church-admin-modal-vreserve, 3rem)));
+        height: min(86dvh, calc(100dvh - var(--church-admin-modal-vreserve, 3rem)));
+    }
+}
+
+.church-admin-dialog__surface--narrow {
+    width: min(26rem, calc(100vw - max(1rem, env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px) + 0.75rem)));
+    max-height: min(88dvh, calc(100dvh - var(--church-admin-modal-vreserve, 2rem)), 34rem);
+}
+
+.church-admin-dialog__header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+@media (min-width: 640px) {
+    .church-admin-dialog__header {
+        padding: 0.875rem 1.25rem;
+    }
+}
+
+.church-admin-dialog__eyebrow {
+    margin: 0 0 0.125rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-church-gold-soft);
+    opacity: 0.95;
+}
+
+@media (min-width: 640px) {
+    .church-admin-dialog__eyebrow {
+        font-size: 0.6875rem;
+    }
+}
+
+.church-admin-dialog__title {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    color: var(--color-church-fg);
+}
+
+@media (min-width: 640px) {
+    .church-admin-dialog__title {
+        font-size: 1.0625rem;
+    }
+}
+
+.church-admin-dialog__icon-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    padding: 0;
+    border-radius: 0.625rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgb(203 213 225);
+    cursor: pointer;
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.church-admin-dialog__icon-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-church-fg);
+    border-color: rgba(232, 197, 71, 0.25);
+}
+
+.church-admin-dialog__icon-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-church-card), 0 0 0 4px rgba(232, 197, 71, 0.45);
+}
+
+.church-admin-dialog__frame-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-church-surface);
+    position: relative;
+}
+
+.church-admin-dialog__frame-wrap::after {
+    content: '';
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    border-radius: 0;
+}
+
+.church-admin-dialog__frame {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    border: 0;
+    background: var(--color-church-surface);
+    display: block;
+}
+
+.church-admin-dialog__delete-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 1.25rem 1.25rem 1.375rem;
+    text-align: center;
+}
+
+@media (min-width: 640px) {
+    .church-admin-dialog__delete-form {
+        padding: 1.5rem 1.75rem 1.625rem;
+    }
+}
+
+.church-admin-dialog__delete-icon {
+    margin: 0 auto 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(248, 113, 113, 0.22);
+}
+
+.church-admin-dialog__delete-heading {
+    margin: 0 0 0.5rem;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--color-church-fg);
+}
+
+.church-admin-dialog__delete-text {
+    margin: 0 0 1.25rem;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: rgb(148 163 184);
+    text-align: center;
+    word-break: break-word;
+}
+
+.church-admin-dialog__delete-actions {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+}
+
+@media (min-width: 400px) {
+    .church-admin-dialog__delete-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.625rem;
+    }
+}
+
+.church-admin-dialog__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.5rem 1.125rem;
+    border-radius: 0.625rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.church-admin-dialog__btn--secondary {
+    width: 100%;
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-church-fg);
+}
+
+.church-admin-dialog__btn--secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.church-admin-dialog__btn--danger {
+    width: 100%;
+    background: rgb(220 38 38);
+    color: white;
+    border-color: rgba(0, 0, 0, 0.08);
+}
+
+.church-admin-dialog__btn--danger:hover {
+    background: rgb(185 28 28);
+}
+
+@media (min-width: 400px) {
+    .church-admin-dialog__btn {
+        width: auto;
+        min-width: 6.5rem;
+    }
+}
+
+.church-admin-dialog__btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-church-card), 0 0 0 4px rgba(232, 197, 71, 0.35);
+}
