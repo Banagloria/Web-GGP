@@ -8,6 +8,7 @@ use App\Support\PublicNavIcon;
 use App\Services\CmsPageService;
 use App\Support\CmsPublicPageDefaults;
 use App\Support\PublicCmsUrl;
+use App\Models\User;
 use App\Models\BaptismRegistration;
 use App\Models\CongregationRegistration;
 use App\Models\MarriageRegistration;
@@ -48,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
         Route::bind('marriage', fn (string $v) => MarriageRegistration::query()->findOrFail($v));
         Route::bind('schedule', fn (string $v) => WorshipSchedule::query()->findOrFail($v));
         Route::bind('galleryItem', fn (string $v) => GalleryItem::query()->findOrFail($v));
+        Route::bind('user', fn (string $v) => User::query()->panelUsers()->findOrFail($v));
 
         $layoutDefaults = [
             'churchPhone' => '081240311377',

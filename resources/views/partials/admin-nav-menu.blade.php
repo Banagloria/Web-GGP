@@ -1,5 +1,6 @@
 @php
     $compact = $compact ?? false;
+    $canManageSuperAdmin = auth()->user()?->isSuperAdmin() ?? false;
     $navClass = $compact
         ? 'flex flex-col divide-y divide-white/10 py-2 text-[0.8125rem] leading-snug sm:text-sm'
         : 'admin-sidebar__menu flex flex-col gap-1 p-3 text-sm';
@@ -67,12 +68,28 @@
                 <span class="min-w-0 flex-1 break-words">Galeri</span>
             </span>
         </a>
-        <a href="{{ route('dashboard.halaman.index') }}" class="{{ $rowCompact }} {{ request()->routeIs('dashboard.halaman.index', 'dashboard.halaman.cms.*') ? 'border-l-4 border-l-church-gold bg-white/10 text-church-gold' : 'border-l-4 border-l-transparent text-slate-200 active:bg-white/5' }}">
+        @if ($canManageSuperAdmin)
+            <a href="{{ route('dashboard.halaman.index') }}" class="{{ $rowCompact }} {{ request()->routeIs('dashboard.halaman.index', 'dashboard.halaman.cms.*') ? 'border-l-4 border-l-church-gold bg-white/10 text-church-gold' : 'border-l-4 border-l-transparent text-slate-200 active:bg-white/5' }}">
+                <span class="flex min-w-0 flex-1 items-center gap-2.5 pr-1">
+                    @include('partials.dashboard-nav-icon', ['which' => 'document', 'class' => $iconMain])
+                    <span class="min-w-0 flex-1 break-words">Halaman</span>
+                </span>
+            </a>
+        @endif
+        <a href="{{ route('dashboard.profil-akun.edit') }}" class="{{ $rowCompact }} {{ request()->routeIs('dashboard.profil-akun.*') ? 'border-l-4 border-l-church-gold bg-white/10 text-church-gold' : 'border-l-4 border-l-transparent text-slate-200 active:bg-white/5' }}">
             <span class="flex min-w-0 flex-1 items-center gap-2.5 pr-1">
-                @include('partials.dashboard-nav-icon', ['which' => 'document', 'class' => $iconMain])
-                <span class="min-w-0 flex-1 break-words">Halaman</span>
+                @include('partials.dashboard-nav-icon', ['which' => 'user', 'class' => $iconMain])
+                <span class="min-w-0 flex-1 break-words">Profil</span>
             </span>
         </a>
+        @if ($canManageSuperAdmin)
+            <a href="{{ route('dashboard.akun.index') }}" class="{{ $rowCompact }} {{ request()->routeIs('dashboard.akun.*') ? 'border-l-4 border-l-church-gold bg-white/10 text-church-gold' : 'border-l-4 border-l-transparent text-slate-200 active:bg-white/5' }}">
+                <span class="flex min-w-0 flex-1 items-center gap-2.5 pr-1">
+                    @include('partials.dashboard-nav-icon', ['which' => 'users', 'class' => $iconMain])
+                    <span class="min-w-0 flex-1 break-words">Manajemen akun</span>
+                </span>
+            </a>
+        @endif
     @else
         <a href="{{ route('dashboard.index') }}" class="{{ $rowFull }} {{ request()->routeIs('dashboard.index') ? $rowFullActive : $rowFullIdle }}">
             @include('partials.dashboard-nav-icon', ['which' => 'home', 'class' => $iconMain])
@@ -115,9 +132,21 @@
             @include('partials.dashboard-nav-icon', ['which' => 'photo', 'class' => $iconMain])
             <span>Galeri</span>
         </a>
-        <a href="{{ route('dashboard.halaman.index') }}" class="{{ $rowFull }} {{ request()->routeIs('dashboard.halaman.index', 'dashboard.halaman.cms.*') ? $rowFullActive : $rowFullIdle }}">
-            @include('partials.dashboard-nav-icon', ['which' => 'document', 'class' => $iconMain])
-            <span>Halaman</span>
+        @if ($canManageSuperAdmin)
+            <a href="{{ route('dashboard.halaman.index') }}" class="{{ $rowFull }} {{ request()->routeIs('dashboard.halaman.index', 'dashboard.halaman.cms.*') ? $rowFullActive : $rowFullIdle }}">
+                @include('partials.dashboard-nav-icon', ['which' => 'document', 'class' => $iconMain])
+                <span>Halaman</span>
+            </a>
+        @endif
+        <a href="{{ route('dashboard.profil-akun.edit') }}" class="{{ $rowFull }} {{ request()->routeIs('dashboard.profil-akun.*') ? $rowFullActive : $rowFullIdle }}">
+            @include('partials.dashboard-nav-icon', ['which' => 'user', 'class' => $iconMain])
+            <span>Profil</span>
         </a>
+        @if ($canManageSuperAdmin)
+            <a href="{{ route('dashboard.akun.index') }}" class="{{ $rowFull }} {{ request()->routeIs('dashboard.akun.*') ? $rowFullActive : $rowFullIdle }}">
+                @include('partials.dashboard-nav-icon', ['which' => 'users', 'class' => $iconMain])
+                <span>Manajemen akun</span>
+            </a>
+        @endif
     @endif
 </nav>

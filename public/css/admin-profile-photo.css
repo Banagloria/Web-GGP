@@ -1,0 +1,136 @@
+/* Kotak foto profil — dipakai tanpa build Vite */
+.profile-photo-editor {
+    width: 100%;
+    min-width: 0;
+}
+
+.profile-photo-editor__body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+}
+
+.profile-photo-editor__photo-trigger {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: default;
+}
+
+.profile-photo-editor__photo-trigger:not(:disabled) {
+    cursor: pointer;
+}
+
+.profile-photo-editor__photo-trigger:not(:disabled):focus-visible .profile-photo-editor__avatar-wrap {
+    outline: 2px solid rgb(232 185 35 / 0.6);
+    outline-offset: 3px;
+}
+
+.profile-photo-editor__photo-trigger:not(:disabled):hover .profile-photo-editor__avatar-wrap {
+    box-shadow: 0 0 0 2px rgb(232 185 35 / 0.35);
+}
+
+.profile-photo-editor__identity {
+    width: 100%;
+    max-width: 24rem;
+}
+
+.profile-photo-detail-modal.flex {
+    display: flex;
+}
+
+.profile-photo-editor__avatar-wrap {
+    position: relative;
+    display: block;
+    flex-shrink: 0;
+    overflow: hidden;
+    width: 7rem;
+    height: 7rem;
+    min-width: 7rem;
+    min-height: 7rem;
+    max-width: 7rem;
+    max-height: 7rem;
+    border-radius: 0.5rem;
+}
+
+.profile-photo-editor__avatar-wrap > .profile-photo-editor__avatar,
+.profile-photo-editor__avatar-wrap > img.profile-photo-editor__avatar,
+.profile-photo-editor__avatar-wrap > .profile-photo-editor__avatar-placeholder {
+    position: absolute;
+    inset: 0;
+}
+
+@media (min-width: 640px) {
+    .profile-photo-editor__avatar-wrap {
+        width: 8rem;
+        height: 8rem;
+        min-width: 8rem;
+        min-height: 8rem;
+        max-width: 8rem;
+        max-height: 8rem;
+    }
+}
+
+.profile-photo-editor__avatar,
+.profile-photo-editor__avatar-placeholder {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    min-width: 100%;
+    min-height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 0.5rem;
+    line-height: 1;
+    animation: none !important;
+    transform: none !important;
+}
+
+.profile-photo-editor__avatar-placeholder {
+    background-color: rgb(232 185 35 / 0.1);
+    border: 2px solid rgb(232 185 35 / 0.25);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+}
+
+.profile-photo-editor__user-icon {
+    font-size: 2rem;
+    color: rgb(232 185 35 / 0.75);
+}
+
+@media (min-width: 640px) {
+    .profile-photo-editor__user-icon {
+        font-size: 2.5rem;
+    }
+}
+
+.profile-photo-editor__avatar--preview {
+    object-fit: cover;
+    background-color: rgb(255 255 255 / 0.05);
+    box-shadow: inset 0 0 0 2px rgb(232 185 35 / 0.2);
+}
+
+.profile-photo-editor__actions {
+    width: 100%;
+    max-width: 24rem;
+}
+
+.profile-photo-editor__actions .profile-photo-editor__empty-note {
+    margin-bottom: 0.25rem;
+}
+
+.profile-photo-editor,
+.profile-photo-editor__body,
+.profile-photo-editor__avatar-wrap {
+    animation: none !important;
+    transform: none !important;
+}

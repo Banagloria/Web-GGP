@@ -38,10 +38,12 @@ class ChurchSeeder extends Seeder
             [
                 'name' => 'Admin Gereja',
                 'password' => Hash::make('admin123'),
-                'role' => 'admin',
+                'role' => User::ROLE_SUPER_ADMIN,
                 'email_verified_at' => now(),
             ]
         );
+
+        $this->call(SuperAdminSeeder::class);
 
         $defaults = [
             'church_name_line1' => 'GEREJA GERAKAN PANTEKOSTA',

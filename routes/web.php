@@ -10,7 +10,9 @@ use App\Http\Controllers\Admin\ContentPageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MarriageRegistrationController;
 use App\Http\Controllers\Admin\RegistrationSubmissionController;
+use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\UserAccountController;
 use App\Http\Controllers\Admin\WorshipScheduleAdminController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Public\GalleryController as PublicGalleryController;
@@ -93,13 +95,25 @@ Route::middleware(['auth', 'admin'])->prefix('dashboard')->name('dashboard.')->g
     Route::get('pengaturan', [SettingsController::class, 'edit'])->name('pengaturan.edit');
     Route::put('pengaturan', [SettingsController::class, 'update'])->name('pengaturan.update');
 
-    Route::get('halaman', [ContentPageController::class, 'index'])->name('halaman.index');
-    Route::get('halaman/pendaftaran/kartu/{cardKey}/edit', [CmsPageController::class, 'editPendaftaranCard'])
-        ->name('halaman.pendaftaran.kartu.edit');
-    Route::put('halaman/pendaftaran/kartu/{cardKey}', [CmsPageController::class, 'updatePendaftaranCard'])
-        ->name('halaman.pendaftaran.kartu.update');
-    Route::get('halaman/{pageKey}/edit', [CmsPageController::class, 'edit'])->name('halaman.cms.edit');
-    Route::put('halaman/{pageKey}', [CmsPageController::class, 'update'])->name('halaman.cms.update');
+    Route::get('profil-akun', [ProfileController::class, 'edit'])->name('profil-akun.edit');
+    Route::match(['put', 'post'], 'profil-akun', [ProfileController::class, 'update'])->name('profil-akun.update');
+
+    Route::middleware('super_admin')->group(function () {
+        Route::get('akun', [UserAccountController::class, 'index'])->name('akun.index');
+        Route::get('akun/create', [UserAccountController::class, 'create'])->name('akun.create');
+        Route::post('akun', [UserAccountController::class, 'store'])->name('akun.store');
+        Route::get('akun/{user}/edit', [UserAccountController::class, 'edit'])->name('akun.edit');
+        Route::put('akun/{user}', [UserAccountController::class, 'update'])->name('akun.update');
+        Route::delete('akun/{user}', [UserAccountController::class, 'destroy'])->name('akun.destroy');
+
+        Route::get('halaman', [ContentPageController::class, 'index'])->name('halaman.index');
+        Route::get('halaman/pendaftaran/kartu/{cardKey}/edit', [CmsPageController::class, 'editPendaftaranCard'])
+            ->name('halaman.pendaftaran.kartu.edit');
+        Route::put('halaman/pendaftaran/kartu/{cardKey}', [CmsPageController::class, 'updatePendaftaranCard'])
+            ->name('halaman.pendaftaran.kartu.update');
+        Route::get('halaman/{pageKey}/edit', [CmsPageController::class, 'edit'])->name('halaman.cms.edit');
+        Route::put('halaman/{pageKey}', [CmsPageController::class, 'update'])->name('halaman.cms.update');
+    });
 
     Route::get('pendaftaran-data/{slug}/export/csv', [RegistrationSubmissionController::class, 'exportCsv'])
         ->name('pendaftaran-data.export-csv')

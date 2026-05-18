@@ -437,6 +437,110 @@
         @apply focus-visible:ring-offset-1 focus-visible:ring-offset-church-card;
     }
 
+    /* Halaman profil admin — cegah overflow input file di layar sempit */
+    .admin-profile-file-input {
+        @apply max-w-full min-w-0;
+    }
+
+    .profile-photo-editor__avatar-wrap {
+        position: relative;
+        display: block;
+        flex-shrink: 0;
+        overflow: hidden;
+        width: 7rem;
+        height: 7rem;
+        min-width: 7rem;
+        min-height: 7rem;
+        max-width: 7rem;
+        max-height: 7rem;
+        border-radius: 0.5rem;
+    }
+
+    .profile-photo-editor__avatar-wrap > .profile-photo-editor__avatar,
+    .profile-photo-editor__avatar-wrap > img.profile-photo-editor__avatar,
+    .profile-photo-editor__avatar-wrap > .profile-photo-editor__avatar-placeholder {
+        position: absolute;
+        inset: 0;
+    }
+
+    @media (min-width: 640px) {
+        .profile-photo-editor__avatar-wrap {
+            width: 8rem;
+            height: 8rem;
+            min-width: 8rem;
+            min-height: 8rem;
+            max-width: 8rem;
+            max-height: 8rem;
+        }
+    }
+
+    .profile-photo-editor__avatar,
+    .profile-photo-editor__avatar-placeholder {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        width: 100%;
+        height: 100%;
+        min-width: 100%;
+        min-height: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        aspect-ratio: 1 / 1;
+        border-radius: 0.5rem;
+        line-height: 1;
+        animation: none !important;
+        transform: none !important;
+    }
+
+    .profile-photo-editor__avatar-placeholder {
+        background-color: rgb(232 185 35 / 0.1);
+        border: 2px solid rgb(232 185 35 / 0.25);
+        box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.05);
+    }
+
+    .profile-photo-editor__user-icon {
+        font-size: 2rem;
+        color: rgb(232 185 35 / 0.75);
+    }
+
+    @media (min-width: 640px) {
+        .profile-photo-editor__user-icon {
+            font-size: 2.5rem;
+        }
+    }
+
+    .profile-photo-editor__avatar--preview {
+        object-fit: cover;
+        background-color: rgb(255 255 255 / 0.05);
+        box-shadow: inset 0 0 0 2px rgb(232 185 35 / 0.2);
+    }
+
+    .profile-photo-editor--empty .profile-photo-editor__empty-layout {
+        @apply mx-auto max-w-md;
+    }
+
+    .profile-photo-editor--empty .profile-photo-editor__empty-layout,
+    .profile-photo-editor--empty .profile-photo-editor__avatar-wrap {
+        animation: none !important;
+        transform: none !important;
+    }
+
+    @media (max-width: 639.98px) {
+        body.admin-layout-root .admin-table-actions.w-full {
+            @apply flex w-full justify-center;
+        }
+
+        body.admin-layout-root .admin-table-actions.w-full form {
+            @apply w-full;
+        }
+
+        body.admin-layout-root .admin-table-actions.w-full .admin-btn-icon {
+            @apply mx-auto size-10 w-full max-w-full rounded-xl;
+        }
+    }
+
     /* Dashboard — body main: satu kartu profil membungkus seluruh konten halaman */
     body.admin-layout-root .admin-main-body.public-card-hover::before,
     body.admin-layout-root .admin-main-body.public-card-hover::after {

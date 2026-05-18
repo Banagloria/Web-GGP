@@ -151,13 +151,16 @@
                         <svg class="size-4 shrink-0 opacity-80 transition group-open:rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                     </summary>
                     <div class="public-card-hover fixed left-[max(0.75rem,env(safe-area-inset-left,0px))] right-[max(0.75rem,env(safe-area-inset-right,0px))] top-[calc(4.75rem+env(safe-area-inset-top,0px))] z-[70] max-h-[min(72dvh,calc(100dvh-5.75rem-env(safe-area-inset-bottom,0px)))] overflow-x-hidden overflow-y-auto overscroll-contain break-words rounded-2xl border border-white/10 bg-church-card py-1 text-slate-100 ring-1 ring-church-gold/15 max-[380px]:top-[calc(4.5rem+env(safe-area-inset-top,0px))] sm:left-4 sm:right-4 sm:top-[calc(5.75rem+env(safe-area-inset-top,0px))] sm:max-h-[min(72dvh,calc(100dvh-6.5rem-env(safe-area-inset-bottom,0px)))]">
-                        <div class="flex items-center gap-3 border-b border-white/10 px-3 py-3">
-                            <div class="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-church-gold/90 to-amber-500 text-sm font-bold text-church-navy shadow-md">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
+                        <a
+                            href="{{ route('dashboard.profil-akun.edit') }}"
+                            class="flex items-center gap-3 border-b border-white/10 px-3 py-3 transition hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-church-gold/50 {{ request()->routeIs('dashboard.profil-akun.*') ? 'bg-white/5' : '' }}"
+                        >
+                            @include('admin.partials.user-avatar', ['sizeClass' => 'size-10', 'roundedClass' => 'rounded-lg'])
                             <div class="min-w-0">
                                 <p class="break-words text-sm font-semibold leading-snug text-white">{{ auth()->user()->name }}</p>
                                 <p class="mt-0.5 break-all text-xs leading-snug text-white/65">{{ auth()->user()->email }}</p>
                             </div>
-                        </div>
+                        </a>
                         @include('partials.admin-nav-menu', ['compact' => true])
                         <div class="border-t border-white/10 p-2">
                             <form method="post" action="{{ route('logout') }}">
@@ -180,13 +183,16 @@
     <div class="admin-layout-shell flex min-h-0 w-full max-w-full min-w-0 items-stretch max-md:h-auto md:h-full md:max-h-dvh md:items-stretch md:overflow-hidden">
         <aside class="admin-sidebar hidden w-64 shrink-0 flex-col overflow-hidden text-white shadow-xl md:sticky md:top-0 md:z-30 md:flex md:h-dvh md:max-h-dvh md:min-h-0 md:self-start">
             <div class="admin-sidebar__inner relative z-[1] flex min-h-0 flex-1 flex-col">
-            <div class="admin-sidebar__profile flex shrink-0 items-center gap-3 border-b border-white/10 p-4">
-                <div class="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-church-gold/15 text-sm font-bold text-church-gold ring-1 ring-church-gold/25">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
+            <a
+                href="{{ route('dashboard.profil-akun.edit') }}"
+                class="admin-sidebar__profile flex shrink-0 items-center gap-3 border-b border-white/10 p-4 transition hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-church-gold/50 {{ request()->routeIs('dashboard.profil-akun.*') ? 'bg-white/5 ring-1 ring-inset ring-church-gold/20' : '' }}"
+            >
+                @include('admin.partials.user-avatar')
                 <div class="min-w-0">
                     <p class="break-words text-sm font-semibold leading-snug text-church-fg">{{ auth()->user()->name }}</p>
                     <p class="mt-0.5 break-all text-xs leading-snug text-slate-400">{{ auth()->user()->email }}</p>
                 </div>
-            </div>
+            </a>
             <div class="admin-sidebar__nav min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-contain">
                 @include('partials.admin-nav-menu', ['compact' => false])
             </div>

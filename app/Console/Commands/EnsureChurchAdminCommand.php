@@ -33,7 +33,7 @@ class EnsureChurchAdminCommand extends Command
             [
                 'name' => 'Admin Gereja',
                 'password' => $password,
-                'role' => 'admin',
+                'role' => User::ROLE_SUPER_ADMIN,
                 'email_verified_at' => now(),
             ],
         );

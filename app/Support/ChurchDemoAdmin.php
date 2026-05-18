@@ -40,7 +40,7 @@ final class ChurchDemoAdmin
             [
                 'name' => 'Admin Gereja',
                 'password' => Hash::make(self::DEMO_PASSWORD),
-                'role' => 'admin',
+                'role' => User::ROLE_SUPER_ADMIN,
                 'email_verified_at' => now(),
             ]
         );

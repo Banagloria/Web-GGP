@@ -20,7 +20,7 @@ class AdminLoginTest extends TestCase
 
     public function test_admin_dapat_masuk_dan_diarahkan_ke_dashboard(): void
     {
-        $user = User::factory()->admin()->create([
+        $user = User::factory()->superAdmin()->create([
             'email' => 'pengurus@example.test',
             'password' => 'rahasia-aman',
         ]);
