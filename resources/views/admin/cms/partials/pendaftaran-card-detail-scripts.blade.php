@@ -1,5 +1,8 @@
-<script>
-(function () {
+@once
+    @push('scripts')
+        <script>
+            (function () {
+                function initPendaftaranCardDetailEditors() {
     function confirmRemove(opts, action) {
         if (typeof window.adminConfirmAction === 'function') {
             window.adminConfirmAction(opts, action);
@@ -489,5 +492,14 @@
             reindexTips();
         });
     }
-})();
-</script>
+                }
+
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', initPendaftaranCardDetailEditors);
+                } else {
+                    initPendaftaranCardDetailEditors();
+                }
+            })();
+        </script>
+    @endpush
+@endonce

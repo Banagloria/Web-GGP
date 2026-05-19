@@ -92,10 +92,10 @@
                     <div
                         class="gallery-card-actions pointer-events-none absolute right-1.5 top-1.5 z-20 flex gap-1 rounded-lg bg-black/65 p-0.5 opacity-0 shadow-lg backdrop-blur-sm transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100"
                     >
-                        <div class="admin-table-actions gap-1">
+                        <div class="admin-table-actions admin-table-actions--n3">
                             <button
                                 type="button"
-                                class="admin-btn-icon admin-btn-icon--edit"
+                                class="admin-btn-icon admin-btn-icon--gold"
                                 title="Edit nama foto"
                                 aria-label="Edit nama foto"
                                 data-gallery-edit
@@ -104,7 +104,7 @@
                             >
                                 <i class="fa-solid fa-pen" aria-hidden="true"></i>
                             </button>
-                            <form method="post" action="{{ route('dashboard.galeri.destroy', $item) }}" class="inline">
+                            <form method="post" action="{{ route('dashboard.galeri.destroy', $item) }}" class="contents">
                                 @csrf
                                 @method('DELETE')
                                 <button

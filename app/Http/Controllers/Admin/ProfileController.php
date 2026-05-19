@@ -24,6 +24,7 @@ class ProfileController extends Controller
         return view('admin.profile.edit', [
             'user' => $user,
             'profilePhotoReady' => User::profilePhotoColumnReady(),
+            'phoneColumnReady' => User::phoneColumnReady(),
         ]);
     }
 
@@ -37,6 +38,7 @@ class ProfileController extends Controller
 
         $rules = [
             'name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:50'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
             'profile_photo_file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp'],
             'profile_photo_delete' => ['nullable', 'in:1'],
@@ -58,6 +60,19 @@ class ProfileController extends Controller
         }
 
         $user->name = $data['name'];
+
+        if (User::phoneColumnReady()) {
+            $user->phone = trim((string) ($data['phone'] ?? '')) !== ''
+                ? trim((string) $data['phone'])
+                : null;
+        } elseif (trim((string) ($data['phone'] ?? '')) !== '') {
+            return redirect()
+                ->route('dashboard.profil-akun.edit')
+                ->withErrors([
+                    'phone' => 'Kolom nomor HP belum ada di database. Jalankan di server: php artisan church:ensure-phone-column',
+                ])
+                ->withInput($request->except('password', 'current_password'));
+        }
 
         if ($changingPassword) {
             $user->password = $data['password'];

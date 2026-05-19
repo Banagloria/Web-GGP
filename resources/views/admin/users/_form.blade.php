@@ -15,12 +15,27 @@
             @error('email')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
         </div>
         <div>
+            <x-admin-field-label>Nomor HP / WhatsApp</x-admin-field-label>
+            <input
+                type="tel"
+                name="phone"
+                value="{{ old('phone', $user?->phone) }}"
+                {{ $isCreate ? 'required' : '' }}
+                autocomplete="tel"
+                inputmode="tel"
+                placeholder="08xxxxxxxxxx"
+                class="mt-1 w-full rounded-md border-slate-300 shadow-sm"
+            >
+            <p class="mt-1 text-sm text-slate-400">Nomor yang dapat dihubungi untuk keperluan koordinasi pengurus.</p>
+            @error('phone')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+        </div>
+        <div>
             <x-admin-field-label>Peran</x-admin-field-label>
             <select name="role" required class="mt-1 w-full rounded-md border-slate-300 shadow-sm">
                 <option value="{{ \App\Models\User::ROLE_ADMIN }}" @selected(old('role', $user?->role ?? \App\Models\User::ROLE_ADMIN) === \App\Models\User::ROLE_ADMIN)>Admin</option>
                 <option value="{{ \App\Models\User::ROLE_SUPER_ADMIN }}" @selected(old('role', $user?->role) === \App\Models\User::ROLE_SUPER_ADMIN)>Super admin</option>
             </select>
-            <p class="mt-1 text-sm text-slate-400">Admin tidak dapat mengelola halaman CMS dan akun pengurus. Super admin memiliki akses penuh.</p>
+            <p class="mt-1 text-sm text-slate-400">Admin tidak dapat mengelola setting CMS dan akun pengurus. Super admin memiliki akses penuh.</p>
             @error('role')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
         </div>
     </fieldset>
@@ -31,12 +46,28 @@
         @endif
         <div>
             <x-admin-field-label>Kata sandi{{ $isCreate ? '' : ' baru' }}</x-admin-field-label>
-            <input type="password" name="password" {{ $isCreate ? 'required' : '' }} autocomplete="new-password" class="mt-1 w-full rounded-md border-slate-300 shadow-sm">
+            <x-password-input
+                name="password"
+                id="password"
+                :required="$isCreate"
+                autocomplete="new-password"
+                toggle-variant="admin"
+                wrapper-class="mt-1"
+                input-class="rounded-md border-slate-300 shadow-sm"
+            />
             @error('password')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
         </div>
         <div>
             <x-admin-field-label>Konfirmasi kata sandi</x-admin-field-label>
-            <input type="password" name="password_confirmation" {{ $isCreate ? 'required' : '' }} autocomplete="new-password" class="mt-1 w-full rounded-md border-slate-300 shadow-sm">
+            <x-password-input
+                name="password_confirmation"
+                id="password_confirmation"
+                :required="$isCreate"
+                autocomplete="new-password"
+                toggle-variant="admin"
+                wrapper-class="mt-1"
+                input-class="rounded-md border-slate-300 shadow-sm"
+            />
         </div>
     </fieldset>
 </div>

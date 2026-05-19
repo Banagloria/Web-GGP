@@ -36,7 +36,7 @@ class DashboardController extends Controller
                 'label' => (string) ($card['title'] ?? $slug),
                 'hint' => 'Pendaftaran diajukan',
                 'icon' => self::iconForSlug($slug),
-                'href' => route('dashboard.pendaftaran-data.index', ['slug' => $slug, 'status' => 'submitted']),
+                'href' => route('dashboard.pendaftaran.index', ['slug' => $slug]),
                 'valueClass' => 'text-church-gold',
                 'iconWrapClass' => 'bg-church-gold/15 ring-church-gold/25',
                 'iconClass' => 'size-5 text-church-gold sm:size-6',

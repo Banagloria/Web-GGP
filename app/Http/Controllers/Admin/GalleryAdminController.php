@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\GalleryItem;
+use App\Services\WhatsAppBroadcastCatalog;
+use App\Services\WhatsAppBroadcastDispatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,6 +37,7 @@ class GalleryAdminController extends Controller
 
         $maxSort = (int) GalleryItem::query()->max('sort_order');
         $uploaded = 0;
+        $lastItem = null;
 
         foreach ($request->file('files', []) as $i => $file) {
             if (! $file->isValid()) {
@@ -46,7 +49,7 @@ class GalleryAdminController extends Controller
                 continue;
             }
 
-            GalleryItem::query()->create([
+            $lastItem = GalleryItem::query()->create([
                 'path' => $path,
                 'original_name' => $file->getClientOriginalName(),
                 'mime' => $file->getClientMimeType() ?: $file->getMimeType(),
@@ -65,6 +68,13 @@ class GalleryAdminController extends Controller
         }
 
         $status = $uploaded === 1 ? '1 foto diunggah.' : "{$uploaded} foto diunggah.";
+
+        if ($lastItem !== null) {
+            WhatsAppBroadcastDispatcher::dispatch(
+                WhatsAppBroadcastCatalog::TRIGGER_GALERI,
+                WhatsAppBroadcastCatalog::replacementsFromGalleryItem($lastItem, $uploaded),
+            );
+        }
 
         return $this->storeResponse($request, true, $status);
     }

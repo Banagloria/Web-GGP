@@ -4,50 +4,48 @@
     $editUrl = $editUrl ?? null;
     $editLabel = $editLabel ?? 'Edit';
     $deleteUrl = $deleteUrl ?? null;
+    $confirmDelete = $confirmDelete ?? true;
     $deleteTitle = $deleteTitle ?? 'Hapus data?';
     $deleteMessage = $deleteMessage ?? 'Tindakan ini tidak dapat dibatalkan.';
     $deleteLabel = $deleteLabel ?? 'Ya, hapus';
     $extraClass = $extraClass ?? '';
-    $wrapClass = trim('admin-table-actions ' . $extraClass);
+
+    $actionCount = (int) (bool) $showUrl + (int) (bool) $editUrl + (int) (bool) $deleteUrl;
+    $layoutClass = match (true) {
+        $actionCount === 4 => 'admin-table-actions--n4',
+        $actionCount >= 5 => 'admin-table-actions--n5',
+        default => 'admin-table-actions--n3',
+    };
+    $wrapClass = trim('admin-table-actions '.$layoutClass.' '.$extraClass);
 @endphp
 
 <div class="{{ $wrapClass }}">
     @if ($showUrl)
-        <a
-            href="{{ $showUrl }}"
-            class="admin-btn-icon admin-btn-icon--view"
-            title="{{ $showLabel }}"
-            aria-label="{{ $showLabel }}"
-        >
-            <i class="fa-solid fa-eye" aria-hidden="true"></i>
-        </a>
+        @include('admin.partials.table-action-icon', [
+            'href' => $showUrl,
+            'icon' => 'fa-solid fa-eye',
+            'label' => $showLabel,
+        ])
     @endif
     @if ($editUrl)
-        <a
-            href="{{ $editUrl }}"
-            class="admin-btn-icon admin-btn-icon--edit"
-            title="{{ $editLabel }}"
-            aria-label="{{ $editLabel }}"
-        >
-            <i class="fa-solid fa-pen" aria-hidden="true"></i>
-        </a>
+        @include('admin.partials.table-action-icon', [
+            'href' => $editUrl,
+            'icon' => 'fa-solid fa-pen',
+            'label' => $editLabel,
+        ])
     @endif
     @if ($deleteUrl)
-        <form method="post" action="{{ $deleteUrl }}" class="inline">
-            @csrf
-            @method('DELETE')
-            <button
-                type="submit"
-                class="admin-btn-icon admin-btn-icon--delete"
-                title="Hapus"
-                aria-label="Hapus"
-                data-admin-confirm-submit
-                data-confirm-title="{{ $deleteTitle }}"
-                data-confirm-message="{{ $deleteMessage }}"
-                data-confirm-label="{{ $deleteLabel }}"
-            >
-                <i class="fa-solid fa-trash" aria-hidden="true"></i>
-            </button>
-        </form>
+        @include('admin.partials.table-action-icon', [
+            'formAction' => $deleteUrl,
+            'method' => 'DELETE',
+            'icon' => 'fa-solid fa-trash',
+            'label' => 'Hapus',
+            'variant' => 'delete',
+            'confirmSubmit' => $confirmDelete,
+            'confirmVariant' => 'delete',
+            'confirmTitle' => $deleteTitle,
+            'confirmMessage' => $deleteMessage,
+            'confirmLabel' => $deleteLabel,
+        ])
     @endif
 </div>

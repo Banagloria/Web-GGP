@@ -1,18 +1,5 @@
 @if ($paginator->hasPages())
-    <nav class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" role="navigation">
-        <p class="text-sm text-slate-400">
-            Menampilkan
-            @if ($paginator->firstItem())
-                <span class="font-semibold text-church-gold">{{ $paginator->firstItem() }}</span>
-                sampai
-                <span class="font-semibold text-church-gold">{{ $paginator->lastItem() }}</span>
-            @else
-                {{ $paginator->count() }}
-            @endif
-            dari:
-            <span class="font-semibold text-church-gold">{{ $paginator->total() }}</span>
-            data
-        </p>
+    <nav class="flex justify-end" role="navigation" aria-label="Navigasi halaman">
         <div class="inline-flex flex-wrap gap-1.5">
             @if ($paginator->onFirstPage())
                 <span class="inline-flex cursor-not-allowed items-center rounded-l-md border border-white/10 bg-church-surface px-3 py-1.5 text-sm text-slate-500" aria-hidden="true"><i class="fa-solid fa-angles-left"></i></span>

@@ -25,7 +25,9 @@
 
     @if ($logoPreviewSrc)
         <div class="flex flex-wrap items-center gap-3">
-            <img src="{{ $logoPreviewSrc }}" alt="" width="64" height="64" class="size-16 shrink-0 rounded-md border border-white/15 bg-white/5 object-contain p-1 shadow-sm" loading="lazy" decoding="async">
+            <div class="flex size-20 shrink-0 items-center justify-center overflow-hidden sm:size-24">
+                <img src="{{ $logoPreviewSrc }}" alt="" width="96" height="96" class="size-full object-contain" loading="lazy" decoding="async">
+            </div>
         </div>
         <div>
  <button type="submit" name="site_logo_delete" value="1" class="public-btn-hover inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-medium text-slate-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50" onclick="return confirm('Hapus logo situs?');">

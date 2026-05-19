@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\WorshipSchedule;
 use App\Services\CmsPageService;
+use App\Services\WhatsAppBroadcastCatalog;
+use App\Services\WhatsAppBroadcastDispatcher;
 use App\Services\WorshipSchedulePartitionService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -41,7 +43,12 @@ class WorshipScheduleAdminController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $cms = CmsPageService::merged('jadwal');
-        WorshipSchedule::query()->create($this->validated($request, $cms));
+        $schedule = WorshipSchedule::query()->create($this->validated($request, $cms));
+
+        WhatsAppBroadcastDispatcher::dispatch(
+            WhatsAppBroadcastCatalog::TRIGGER_JADWAL,
+            WhatsAppBroadcastCatalog::replacementsFromSchedule($schedule),
+        );
 
         return redirect()->route('dashboard.jadwal-ibadah.index')->with('status', 'Jadwal ditambahkan.');
     }
@@ -86,7 +93,13 @@ class WorshipScheduleAdminController extends Controller
             'column_values.*' => ['nullable', 'string', 'max:500'],
         ];
 
-        $validated = $request->validate($rules);
+        $validated = $request->validate($rules, [], [
+            'schedule_date' => 'tanggal',
+            'starts_at' => 'jam mulai',
+            'ends_at' => 'jam selesai',
+            'column_values' => 'detail jadwal',
+            'column_values.*' => 'kolom jadwal',
+        ]);
 
         $startsAt = $validated['starts_at'];
         $endsAt = $validated['ends_at'];

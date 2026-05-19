@@ -8,13 +8,13 @@
     <div class="mb-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div class="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             @include('admin.partials.btn', [
-                'href' => route('dashboard.pendaftaran-jemaat.create'),
+                'href' => route('dashboard.pendaftaran.create'),
                 'variant' => 'primary',
                 'icon' => 'fa-solid fa-plus',
                 'label' => 'Tambah Jemaat',
             ])
             @include('admin.partials.btn', [
-                'href' => route('dashboard.pendaftaran-jemaat.export-csv', request()->query()),
+                'href' => route('dashboard.pendaftaran.export-csv', array_merge(['slug' => 'jemaat'], request()->query())),
                 'variant' => 'secondary',
                 'icon' => 'fa-solid fa-file-csv',
                 'label' => 'Ekspor CSV',
@@ -74,9 +74,9 @@
                         </td>
                         <td class="px-3 py-2">
                             @include('admin.partials.table-actions', [
-                                'showUrl' => route('dashboard.pendaftaran-jemaat.show', $row),
-                                'editUrl' => route('dashboard.pendaftaran-jemaat.edit', $row),
-                                'deleteUrl' => route('dashboard.pendaftaran-jemaat.destroy', $row),
+                                'showUrl' => route('dashboard.pendaftaran.show', ['jemaat', $row]),
+                                'editUrl' => route('dashboard.pendaftaran.edit', $row),
+                                'deleteUrl' => route('dashboard.pendaftaran.destroy', ['jemaat', $row]),
                                 'deleteMessage' => 'Data jemaat ini akan dihapus permanen.',
                             ])
                         </td>

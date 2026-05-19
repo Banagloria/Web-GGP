@@ -24,6 +24,7 @@
                 <tr class="bg-church-navy-mid text-left text-white">
                     <th class="px-3 py-2">Nama</th>
                     <th class="px-3 py-2">Email</th>
+                    <th class="px-3 py-2">No. HP</th>
                     <th class="px-3 py-2">Peran</th>
                     <th class="px-3 py-2">Dibuat</th>
                     <th class="px-3 py-2 w-32">Aksi</th>
@@ -39,6 +40,7 @@
                             @endif
                         </td>
                         <td class="px-3 py-2">{{ $row->email }}</td>
+                        <td class="px-3 py-2">{{ \App\Models\User::phoneColumnReady() ? ($row->phone ?: '—') : '—' }}</td>
                         <td class="px-3 py-2">{{ $row->roleLabel() }}</td>
                         <td class="px-3 py-2">{{ $row->created_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</td>
                         <td class="px-3 py-2">

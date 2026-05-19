@@ -24,7 +24,7 @@
             </span>
         </a>
 
-        <details class="group" @if (request()->routeIs('dashboard.pendaftaran-data.*')) open @endif>
+        <details class="group" @if (request()->routeIs('dashboard.pendaftaran.*')) open @endif>
             <summary class="{{ $rowCompact }} cursor-pointer list-none hover:bg-white/5 [&::-webkit-details-marker]:hidden">
                 <span class="flex min-w-0 flex-1 items-center gap-2.5 pr-1">
                     @include('partials.dashboard-nav-icon', ['which' => 'clipboard', 'class' => $iconMain])
@@ -34,7 +34,7 @@
             </summary>
             <div class="space-y-0 border-t border-white/10 bg-white/[0.04] px-3 py-1.5 sm:px-4">
                 @forelse ($cmsPendaftaranNav ?? [] as $__navPendaftaran)
-                    <a href="{{ $__navPendaftaran['url'] }}" class="public-btn-hover flex items-center gap-2.5 rounded-md px-2 py-2 text-[0.8125rem] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-church-gold/50 sm:px-3 sm:text-sm {{ request()->routeIs('dashboard.pendaftaran-data.*') && request()->route('slug') === $__navPendaftaran['slug'] ? 'bg-white/15 font-medium' : '' }}">
+                    <a href="{{ $__navPendaftaran['url'] }}" class="public-btn-hover flex items-center gap-2.5 rounded-md px-2 py-2 text-[0.8125rem] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-church-gold/50 sm:px-3 sm:text-sm {{ request()->routeIs('dashboard.pendaftaran.*') && request()->route('slug') === $__navPendaftaran['slug'] ? 'bg-white/15 font-medium text-church-gold' : '' }}">
                         @include('partials.dashboard-nav-icon', ['which' => 'users', 'class' => $iconSub])
                         <span>{{ $__navPendaftaran['label'] }}</span>
                     </a>
@@ -44,38 +44,9 @@
             </div>
         </details>
 
-        <a href="{{ route('dashboard.pengumuman.index') }}" class="{{ $rowCompact }} {{ request()->routeIs('dashboard.pengumuman.*') ? 'border-l-4 border-l-church-gold bg-white/10 text-church-gold' : 'border-l-4 border-l-transparent text-slate-200 active:bg-white/5' }}">
-            <span class="flex min-w-0 flex-1 items-center gap-2.5 pr-1">
-                @include('partials.dashboard-nav-icon', ['which' => 'bell', 'class' => $iconMain])
-                <span class="min-w-0 flex-1 break-words">Pengumuman</span>
-            </span>
-        </a>
-        <a href="{{ route('dashboard.jadwal-ibadah.index') }}" class="{{ $rowCompact }} {{ request()->routeIs('dashboard.jadwal-ibadah.*') ? 'border-l-4 border-l-church-gold bg-white/10 text-church-gold' : 'border-l-4 border-l-transparent text-slate-200 active:bg-white/5' }}">
-            <span class="flex min-w-0 flex-1 items-center gap-2.5 pr-1">
-                @include('partials.dashboard-nav-icon', ['which' => 'calendar', 'class' => $iconMain])
-                <span class="min-w-0 flex-1 break-words">Jadwal</span>
-            </span>
-        </a>
-        <a href="{{ route('dashboard.kontak.index') }}" class="{{ $rowCompact }} {{ request()->routeIs('dashboard.kontak.*') ? 'border-l-4 border-l-church-gold bg-white/10 text-church-gold' : 'border-l-4 border-l-transparent text-slate-200 active:bg-white/5' }}">
-            <span class="flex min-w-0 flex-1 items-center gap-2.5 pr-1">
-                @include('partials.dashboard-nav-icon', ['which' => 'envelope', 'class' => $iconMain])
-                <span class="min-w-0 flex-1 break-words">Kontak</span>
-            </span>
-        </a>
-        <a href="{{ route('dashboard.galeri.index') }}" class="{{ $rowCompact }} {{ request()->routeIs('dashboard.galeri.*') ? 'border-l-4 border-l-church-gold bg-white/10 text-church-gold' : 'border-l-4 border-l-transparent text-slate-200 active:bg-white/5' }}">
-            <span class="flex min-w-0 flex-1 items-center gap-2.5 pr-1">
-                @include('partials.dashboard-nav-icon', ['which' => 'photo', 'class' => $iconMain])
-                <span class="min-w-0 flex-1 break-words">Galeri</span>
-            </span>
-        </a>
-        @if ($canManageSuperAdmin)
-            <a href="{{ route('dashboard.halaman.index') }}" class="{{ $rowCompact }} {{ request()->routeIs('dashboard.halaman.index', 'dashboard.halaman.cms.*') ? 'border-l-4 border-l-church-gold bg-white/10 text-church-gold' : 'border-l-4 border-l-transparent text-slate-200 active:bg-white/5' }}">
-                <span class="flex min-w-0 flex-1 items-center gap-2.5 pr-1">
-                    @include('partials.dashboard-nav-icon', ['which' => 'document', 'class' => $iconMain])
-                    <span class="min-w-0 flex-1 break-words">Halaman</span>
-                </span>
-            </a>
-        @endif
+        @include('partials.admin-nav-pendaftaran-diterima', compact('compact', 'rowCompact', 'iconMain', 'iconSub', 'iconChevron', 'subLink', 'subLinkActive', 'subLinkIdle'))
+
+        @include('partials.admin-nav-konten', compact('compact', 'rowCompact', 'iconMain', 'iconSub', 'iconChevron', 'subLink', 'subLinkActive', 'subLinkIdle'))
         <a href="{{ route('dashboard.profil-akun.edit') }}" class="{{ $rowCompact }} {{ request()->routeIs('dashboard.profil-akun.*') ? 'border-l-4 border-l-church-gold bg-white/10 text-church-gold' : 'border-l-4 border-l-transparent text-slate-200 active:bg-white/5' }}">
             <span class="flex min-w-0 flex-1 items-center gap-2.5 pr-1">
                 @include('partials.dashboard-nav-icon', ['which' => 'user', 'class' => $iconMain])
@@ -89,6 +60,12 @@
                     <span class="min-w-0 flex-1 break-words">Manajemen akun</span>
                 </span>
             </a>
+            <a href="{{ route('dashboard.setting.index') }}" class="{{ $rowCompact }} {{ request()->routeIs('dashboard.setting.*') ? 'border-l-4 border-l-church-gold bg-white/10 text-church-gold' : 'border-l-4 border-l-transparent text-slate-200 active:bg-white/5' }}">
+                <span class="flex min-w-0 flex-1 items-center gap-2.5 pr-1">
+                    @include('partials.dashboard-nav-icon', ['which' => 'cog', 'class' => $iconMain])
+                    <span class="min-w-0 flex-1 break-words">Setting</span>
+                </span>
+            </a>
         @endif
     @else
         <a href="{{ route('dashboard.index') }}" class="{{ $rowFull }} {{ request()->routeIs('dashboard.index') ? $rowFullActive : $rowFullIdle }}">
@@ -96,7 +73,7 @@
             <span>Dashboard</span>
         </a>
 
-        <details class="admin-nav-group group rounded-xl" @if (request()->routeIs('dashboard.pendaftaran-data.*')) open @endif>
+        <details class="admin-nav-group group rounded-xl" @if (request()->routeIs('dashboard.pendaftaran.*')) open @endif>
             <summary class="admin-nav-link flex cursor-pointer list-none items-center justify-between gap-2 rounded-xl border border-transparent px-3 py-2.5 text-sm text-slate-300 transition duration-300 hover:border-church-gold/25 hover:bg-church-surface/60 hover:text-church-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-church-gold/50">
                 <span class="flex min-w-0 flex-1 items-center gap-2.5">
                     @include('partials.dashboard-nav-icon', ['which' => 'clipboard', 'class' => $iconMain])
@@ -106,7 +83,7 @@
             </summary>
             <div class="admin-nav-submenu ml-1.5 mt-1 space-y-0.5 border-l border-church-gold/20 py-1 pl-2 sm:ml-2 sm:pl-2.5">
                 @forelse ($cmsPendaftaranNav ?? [] as $__navPendaftaran)
-                    <a href="{{ $__navPendaftaran['url'] }}" class="{{ $subLink }} {{ request()->routeIs('dashboard.pendaftaran-data.*') && request()->route('slug') === $__navPendaftaran['slug'] ? $subLinkActive : $subLinkIdle }}">
+                    <a href="{{ $__navPendaftaran['url'] }}" class="{{ $subLink }} {{ request()->routeIs('dashboard.pendaftaran.*') && request()->route('slug') === $__navPendaftaran['slug'] ? $subLinkActive : $subLinkIdle }}">
                         @include('partials.dashboard-nav-icon', ['which' => 'users', 'class' => $iconSub])
                         <span>{{ $__navPendaftaran['label'] }}</span>
                     </a>
@@ -116,28 +93,9 @@
             </div>
         </details>
 
-        <a href="{{ route('dashboard.pengumuman.index') }}" class="{{ $rowFull }} {{ request()->routeIs('dashboard.pengumuman.*') ? $rowFullActive : $rowFullIdle }}">
-            @include('partials.dashboard-nav-icon', ['which' => 'bell', 'class' => $iconMain])
-            <span>Pengumuman</span>
-        </a>
-        <a href="{{ route('dashboard.jadwal-ibadah.index') }}" class="{{ $rowFull }} {{ request()->routeIs('dashboard.jadwal-ibadah.*') ? $rowFullActive : $rowFullIdle }}">
-            @include('partials.dashboard-nav-icon', ['which' => 'calendar', 'class' => $iconMain])
-            <span>Jadwal</span>
-        </a>
-        <a href="{{ route('dashboard.kontak.index') }}" class="{{ $rowFull }} {{ request()->routeIs('dashboard.kontak.*') ? $rowFullActive : $rowFullIdle }}">
-            @include('partials.dashboard-nav-icon', ['which' => 'envelope', 'class' => $iconMain])
-            <span>Kontak</span>
-        </a>
-        <a href="{{ route('dashboard.galeri.index') }}" class="{{ $rowFull }} {{ request()->routeIs('dashboard.galeri.*') ? $rowFullActive : $rowFullIdle }}">
-            @include('partials.dashboard-nav-icon', ['which' => 'photo', 'class' => $iconMain])
-            <span>Galeri</span>
-        </a>
-        @if ($canManageSuperAdmin)
-            <a href="{{ route('dashboard.halaman.index') }}" class="{{ $rowFull }} {{ request()->routeIs('dashboard.halaman.index', 'dashboard.halaman.cms.*') ? $rowFullActive : $rowFullIdle }}">
-                @include('partials.dashboard-nav-icon', ['which' => 'document', 'class' => $iconMain])
-                <span>Halaman</span>
-            </a>
-        @endif
+        @include('partials.admin-nav-pendaftaran-diterima', compact('compact', 'rowFull', 'iconMain', 'iconSub', 'iconChevron', 'subLink', 'subLinkActive', 'subLinkIdle'))
+
+        @include('partials.admin-nav-konten', compact('compact', 'rowFull', 'iconMain', 'iconSub', 'iconChevron', 'subLink', 'subLinkActive', 'subLinkIdle'))
         <a href="{{ route('dashboard.profil-akun.edit') }}" class="{{ $rowFull }} {{ request()->routeIs('dashboard.profil-akun.*') ? $rowFullActive : $rowFullIdle }}">
             @include('partials.dashboard-nav-icon', ['which' => 'user', 'class' => $iconMain])
             <span>Profil</span>
@@ -146,6 +104,10 @@
             <a href="{{ route('dashboard.akun.index') }}" class="{{ $rowFull }} {{ request()->routeIs('dashboard.akun.*') ? $rowFullActive : $rowFullIdle }}">
                 @include('partials.dashboard-nav-icon', ['which' => 'users', 'class' => $iconMain])
                 <span>Manajemen akun</span>
+            </a>
+            <a href="{{ route('dashboard.setting.index') }}" class="{{ $rowFull }} {{ request()->routeIs('dashboard.setting.*') ? $rowFullActive : $rowFullIdle }}">
+                @include('partials.dashboard-nav-icon', ['which' => 'cog', 'class' => $iconMain])
+                <span>Setting</span>
             </a>
         @endif
     @endif

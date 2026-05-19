@@ -4,11 +4,11 @@
 
 @section('content')
     <x-admin-create-page
-        :back-href="route('dashboard.pendaftaran-jemaat.index')"
+        :back-href="route('dashboard.pendaftaran.index', ['slug' => 'jemaat'])"
         back-label="Daftar jemaat"
         icon="fa-solid fa-user-plus"
         title="Tambah jemaat"
-        :action="route('dashboard.pendaftaran-jemaat.store')"
+        :action="route('dashboard.pendaftaran.store')"
     >
         @include('admin.congregations._form')
     </x-admin-create-page>

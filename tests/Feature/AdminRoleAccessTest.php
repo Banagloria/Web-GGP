@@ -15,7 +15,11 @@ class AdminRoleAccessTest extends TestCase
         $superAdmin = User::factory()->superAdmin()->create();
 
         $this->actingAs($superAdmin)
-            ->get(route('dashboard.halaman.index'))
+            ->get(route('dashboard.setting.index'))
+            ->assertOk();
+
+        $this->actingAs($superAdmin)
+            ->get(route('dashboard.setting.notifikasi-whatsapp.index'))
             ->assertOk();
 
         $this->actingAs($superAdmin)
@@ -28,7 +32,7 @@ class AdminRoleAccessTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         $this->actingAs($admin)
-            ->get(route('dashboard.halaman.index'))
+            ->get(route('dashboard.setting.index'))
             ->assertForbidden();
 
         $this->actingAs($admin)

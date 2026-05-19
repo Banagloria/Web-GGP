@@ -26,17 +26,17 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <label class="block">
                 @include('admin.partials.form-label', ['text' => 'Tanggal'])
-                <input type="date" name="schedule_date" value="{{ $dateVal }}" required class="{{ $inputClass }}">
+                <input type="date" name="schedule_date" value="{{ $dateVal }}" class="{{ $inputClass }}">
                 @error('schedule_date')<p class="mt-1.5 text-xs text-red-400">{{ $message }}</p>@enderror
             </label>
             <label class="block">
                 @include('admin.partials.form-label', ['text' => 'Jam mulai'])
-                <input type="time" name="starts_at" value="{{ old('starts_at', $timeVal) }}" required class="{{ $inputClass }}">
+                <input type="time" name="starts_at" value="{{ old('starts_at', $timeVal) }}" class="{{ $inputClass }}">
                 @error('starts_at')<p class="mt-1.5 text-xs text-red-400">{{ $message }}</p>@enderror
             </label>
             <label class="block sm:col-span-2 lg:col-span-1">
                 @include('admin.partials.form-label', ['text' => 'Jam selesai'])
-                <input type="time" name="ends_at" value="{{ old('ends_at', $endTimeVal) }}" required class="{{ $inputClass }}">
+                <input type="time" name="ends_at" value="{{ old('ends_at', $endTimeVal) }}" class="{{ $inputClass }}">
                 @error('ends_at')<p class="mt-1.5 text-xs text-red-400">{{ $message }}</p>@enderror
             </label>
         </div>

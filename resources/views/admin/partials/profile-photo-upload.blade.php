@@ -3,6 +3,7 @@
     $persistedUrl = $persistedUrl ?? '';
     $userName = $userName ?? '';
     $userEmail = $userEmail ?? '';
+    $userPhone = trim((string) ($userPhone ?? ''));
     $photoPreviewSrc = $previewUrl !== '' ? \App\Support\PublicCmsUrl::imagePreviewSrc($previewUrl) : null;
     $hasPhoto = $photoPreviewSrc !== null;
 @endphp
@@ -13,6 +14,7 @@
     data-has-photo="{{ $hasPhoto ? '1' : '0' }}"
     data-user-name="{{ $userName }}"
     data-user-email="{{ $userEmail }}"
+    data-user-phone="{{ $userPhone }}"
 >
     <x-admin-field-label as="legend" class="mb-4 block w-full text-left" icon="fa-solid fa-image">
         Gambar profil
@@ -66,6 +68,13 @@
             </p>
             <p id="profile-photo-display-email" class="mt-0.5 break-all text-sm text-slate-400">
                 {{ $userEmail }}
+            </p>
+            <p
+                id="profile-photo-display-phone"
+                class="mt-1 inline-flex items-center gap-1.5 break-all text-sm text-slate-300 {{ $userPhone === '' ? 'hidden' : '' }}"
+            >
+                <i class="fa-solid fa-phone text-[0.7rem] text-church-gold/80" aria-hidden="true"></i>
+                <span id="profile-photo-display-phone-text">{{ $userPhone }}</span>
             </p>
         </div>
 

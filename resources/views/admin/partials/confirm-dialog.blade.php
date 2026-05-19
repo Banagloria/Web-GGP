@@ -15,14 +15,16 @@
 
     <div
         class="public-card-hover admin-confirm-panel relative z-10 flex w-full max-w-md max-h-[min(100dvh,32rem)] flex-col overflow-hidden rounded-t-2xl border border-white/10 bg-church-card ring-1 ring-church-gold/20 sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl"
+        data-confirm-panel
     >
         <div class="overflow-y-auto overscroll-contain px-5 pb-2 pt-5 sm:px-6 sm:pt-6">
             <div class="flex items-start gap-3 sm:gap-4">
                 <span
+                    id="admin-confirm-dialog-icon-wrap"
                     class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-red-500/15 text-red-400 ring-1 ring-red-500/25 sm:size-11"
                     aria-hidden="true"
                 >
-                    <i class="fa-solid fa-triangle-exclamation text-base sm:text-lg"></i>
+                    <i id="admin-confirm-dialog-icon" class="fa-solid fa-triangle-exclamation text-base sm:text-lg"></i>
                 </span>
                 <div class="min-w-0 flex-1 pt-0.5">
                     <h2
@@ -35,6 +37,19 @@
                         id="admin-confirm-dialog-message"
                         class="mt-1.5 break-words text-sm leading-relaxed text-slate-400"
                     ></p>
+                    <div id="admin-confirm-dialog-whatsapp-wrap" class="mt-4 hidden">
+                        <label for="admin-confirm-dialog-whatsapp-message" class="block text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            Pesan WhatsApp
+                        </label>
+                        <p id="admin-confirm-dialog-whatsapp-phone" class="mt-1 text-xs text-slate-500"></p>
+                        <textarea
+                            id="admin-confirm-dialog-whatsapp-message"
+                            rows="3"
+                            class="admin-list-toolbar__input mt-2 w-full resize-y"
+                            placeholder="Tulis pesan untuk dikirim ke nomor HP pendaftar…"
+                        ></textarea>
+                        <p class="mt-1.5 text-xs text-slate-500">Kosongkan jika tidak ingin mengirim WhatsApp.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -55,7 +70,7 @@
                 id="admin-confirm-dialog-ok"
                 class="admin-btn admin-btn--danger-solid min-h-[2.75rem] w-full sm:min-h-0 sm:w-auto"
             >
-                <i class="fa-solid fa-trash text-xs" aria-hidden="true"></i>
+                <i id="admin-confirm-dialog-ok-icon" class="fa-solid fa-trash text-xs" aria-hidden="true"></i>
                 <span id="admin-confirm-dialog-ok-label">Hapus</span>
             </button>
         </div>
@@ -71,10 +86,82 @@
 
                 var titleEl = document.getElementById('admin-confirm-dialog-title');
                 var messageEl = document.getElementById('admin-confirm-dialog-message');
+                var iconWrap = document.getElementById('admin-confirm-dialog-icon-wrap');
+                var iconEl = document.getElementById('admin-confirm-dialog-icon');
                 var okBtn = document.getElementById('admin-confirm-dialog-ok');
+                var okIcon = document.getElementById('admin-confirm-dialog-ok-icon');
                 var okLabel = document.getElementById('admin-confirm-dialog-ok-label');
+                var panel = dialog.querySelector('[data-confirm-panel]');
+                var waWrap = document.getElementById('admin-confirm-dialog-whatsapp-wrap');
+                var waPhoneEl = document.getElementById('admin-confirm-dialog-whatsapp-phone');
+                var waMessageEl = document.getElementById('admin-confirm-dialog-whatsapp-message');
                 var pending = null;
                 var scrollLock = '';
+
+                function optsFromTrigger(trigger) {
+                    return {
+                        title: trigger.dataset.confirmTitle || 'Konfirmasi',
+                        message: trigger.dataset.confirmMessage || 'Lanjutkan?',
+                        confirmLabel: trigger.dataset.confirmLabel || 'Lanjutkan',
+                        variant: trigger.dataset.confirmVariant || 'delete',
+                        showWhatsapp: trigger.dataset.confirmWhatsapp === '1',
+                        phone: trigger.dataset.confirmPhone || '',
+                        waDefaultMessage: trigger.dataset.confirmWaDefault || '',
+                    };
+                }
+
+                function attachWaMessageToForm(form) {
+                    if (!waMessageEl) {
+                        return;
+                    }
+                    var msg = waMessageEl.value.trim();
+                    var existing = form.querySelector('input[name="wa_message"]');
+                    if (existing) {
+                        existing.remove();
+                    }
+                    if (msg === '') {
+                        return;
+                    }
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'wa_message';
+                    input.value = msg;
+                    form.appendChild(input);
+                }
+
+                var variants = {
+                    accept: {
+                        iconWrap: 'flex size-10 shrink-0 items-center justify-center rounded-xl bg-church-gold/15 text-church-gold ring-1 ring-church-gold/30 sm:size-11',
+                        icon: 'fa-solid fa-check text-base sm:text-lg',
+                        okBtn: 'admin-btn admin-btn--primary min-h-[2.75rem] w-full sm:min-h-0 sm:w-auto',
+                        okIcon: 'fa-solid fa-check text-xs',
+                        panelRing: 'ring-church-gold/25',
+                    },
+                    reject: {
+                        iconWrap: 'flex size-10 shrink-0 items-center justify-center rounded-xl bg-red-500/15 text-red-400 ring-1 ring-red-500/25 sm:size-11',
+                        icon: 'fa-solid fa-xmark text-base sm:text-lg',
+                        okBtn: 'admin-btn admin-btn--danger-solid min-h-[2.75rem] w-full sm:min-h-0 sm:w-auto',
+                        okIcon: 'fa-solid fa-xmark text-xs',
+                        panelRing: 'ring-red-500/20',
+                    },
+                    delete: {
+                        iconWrap: 'flex size-10 shrink-0 items-center justify-center rounded-xl bg-red-500/15 text-red-400 ring-1 ring-red-500/25 sm:size-11',
+                        icon: 'fa-solid fa-trash text-base sm:text-lg',
+                        okBtn: 'admin-btn admin-btn--danger-solid min-h-[2.75rem] w-full sm:min-h-0 sm:w-auto',
+                        okIcon: 'fa-solid fa-trash text-xs',
+                        panelRing: 'ring-red-500/20',
+                    },
+                };
+
+                function applyVariant(variant) {
+                    var v = variants[variant] || variants.delete;
+                    iconWrap.className = v.iconWrap;
+                    iconEl.className = v.icon;
+                    okBtn.className = v.okBtn;
+                    okIcon.className = v.okIcon;
+                    panel.classList.remove('ring-church-gold/20', 'ring-church-gold/25', 'ring-red-500/20');
+                    panel.classList.add(v.panelRing);
+                }
 
                 function closeDialog() {
                     dialog.classList.add('hidden');
@@ -87,14 +174,31 @@
                 function openDialog(opts) {
                     scrollLock = document.body.style.overflow;
                     document.body.style.overflow = 'hidden';
+                    applyVariant(opts.variant || 'delete');
                     titleEl.textContent = opts.title || 'Konfirmasi';
                     messageEl.textContent = opts.message || 'Lanjutkan?';
-                    okLabel.textContent = opts.confirmLabel || 'Hapus';
+                    okLabel.textContent = opts.confirmLabel || 'Lanjutkan';
+                    var showWa = !!opts.showWhatsapp && waWrap && waMessageEl;
+                    if (waWrap) {
+                        waWrap.classList.toggle('hidden', !showWa);
+                    }
+                    if (showWa) {
+                        waMessageEl.value = opts.waDefaultMessage || '';
+                        if (waPhoneEl) {
+                            if (opts.phone) {
+                                waPhoneEl.textContent = 'Nomor tujuan: ' + opts.phone;
+                                waPhoneEl.classList.remove('text-amber-300');
+                            } else {
+                                waPhoneEl.textContent = 'Nomor HP tidak ditemukan — pesan tidak akan terkirim.';
+                                waPhoneEl.classList.add('text-amber-300');
+                            }
+                        }
+                    }
                     dialog.classList.remove('hidden');
                     dialog.classList.add('flex');
                     dialog.setAttribute('aria-hidden', 'false');
                     var cancelBtn = dialog.querySelector('.admin-confirm-panel [data-admin-confirm-cancel]');
-                    (cancelBtn || okBtn).focus();
+                    (showWa ? waMessageEl : (cancelBtn || okBtn)).focus();
                 }
 
                 window.adminConfirm = function (opts) {
@@ -116,9 +220,13 @@
                         return;
                     }
                     window.adminConfirm({
-                        title: o.title || 'Hapus?',
-                        message: o.message || 'Tindakan ini tidak dapat dibatalkan.',
-                        confirmLabel: o.confirmLabel || 'Hapus',
+                        title: o.title || 'Konfirmasi',
+                        message: o.message || 'Lanjutkan?',
+                        confirmLabel: o.confirmLabel || 'Lanjutkan',
+                        variant: o.variant || 'delete',
+                        showWhatsapp: !!o.showWhatsapp,
+                        phone: o.phone || '',
+                        waDefaultMessage: o.waDefaultMessage || '',
                     }).then(function (ok) {
                         if (ok) {
                             action();
@@ -153,12 +261,9 @@
                     var trigger = form.querySelector('[data-admin-confirm-submit]');
                     if (!trigger) return;
                     e.preventDefault();
-                    window.adminConfirm({
-                        title: trigger.dataset.confirmTitle || 'Hapus data?',
-                        message: trigger.dataset.confirmMessage || 'Tindakan ini tidak dapat dibatalkan.',
-                        confirmLabel: trigger.dataset.confirmLabel || 'Hapus',
-                    }).then(function (ok) {
+                    window.adminConfirm(optsFromTrigger(trigger)).then(function (ok) {
                         if (ok) {
+                            attachWaMessageToForm(form);
                             form.dataset.adminConfirmBound = '1';
                             form.requestSubmit ? form.requestSubmit() : form.submit();
                         }

@@ -84,7 +84,7 @@ class CongregationRegistrationController extends Controller
         $data = $this->validated($request);
         CongregationRegistration::query()->create($data);
 
-        return redirect()->route('dashboard.pendaftaran-jemaat.index')->with('status', 'Data jemaat ditambahkan.');
+        return redirect()->route('dashboard.pendaftaran.index', ['slug' => 'jemaat'])->with('status', 'Data jemaat ditambahkan.');
     }
 
     public function show(CongregationRegistration $congregation): View
@@ -101,14 +101,14 @@ class CongregationRegistrationController extends Controller
     {
         $congregation->update($this->validated($request));
 
-        return redirect()->route('dashboard.pendaftaran-jemaat.index')->with('status', 'Data jemaat diperbarui.');
+        return redirect()->route('dashboard.pendaftaran.index', ['slug' => 'jemaat'])->with('status', 'Data jemaat diperbarui.');
     }
 
     public function destroy(CongregationRegistration $congregation): RedirectResponse
     {
         $congregation->delete();
 
-        return redirect()->route('dashboard.pendaftaran-jemaat.index')->with('status', 'Data jemaat dihapus.');
+        return redirect()->route('dashboard.pendaftaran.index', ['slug' => 'jemaat'])->with('status', 'Data jemaat dihapus.');
     }
 
     /**

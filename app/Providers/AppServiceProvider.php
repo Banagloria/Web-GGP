@@ -17,6 +17,7 @@ use App\Models\SiteSetting;
 use App\Models\WorshipSchedule;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
@@ -43,6 +44,10 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Paginator::defaultView('vendor.pagination.church-admin');
+
+        Validator::replacer('required', function (string $message, string $attribute) {
+            return 'Kolom '.$attribute.' wajib diisi.';
+        });
 
         Route::bind('baptism', fn (string $v) => BaptismRegistration::query()->findOrFail($v));
         Route::bind('congregation', fn (string $v) => CongregationRegistration::query()->findOrFail($v));
@@ -83,25 +88,32 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
-        View::composer(['layouts.public'], function ($view) {
+        View::composer(['layouts.public', 'layouts.admin'], function ($view) {
             try {
                 $cmsBeranda = CmsPageService::merged('beranda');
             } catch (Throwable) {
                 $cmsBeranda = CmsPublicPageDefaults::defaultsFor('beranda');
             }
-            try {
-                $cmsPendaftaran = CmsPageService::merged('pendaftaran');
-            } catch (Throwable) {
-                $cmsPendaftaran = CmsPublicPageDefaults::defaultsFor('pendaftaran');
+
+            $payload = ['cmsBeranda' => $cmsBeranda];
+
+            if ($view->name() === 'layouts.public') {
+                try {
+                    $cmsPendaftaran = CmsPageService::merged('pendaftaran');
+                } catch (Throwable) {
+                    $cmsPendaftaran = CmsPublicPageDefaults::defaultsFor('pendaftaran');
+                }
+                $payload['cmsPublicNav'] = self::buildPublicNavItems($cmsBeranda, $cmsPendaftaran);
             }
-            $view->with([
-                'cmsBeranda' => $cmsBeranda,
-                'cmsPublicNav' => self::buildPublicNavItems($cmsBeranda, $cmsPendaftaran),
-            ]);
+
+            $view->with($payload);
         });
 
         View::composer(['partials.admin-nav-menu', 'layouts.admin'], function ($view) {
-            $view->with('cmsPendaftaranNav', \App\Http\Controllers\Admin\RegistrationSubmissionController::navItemsFromCms());
+            $view->with([
+                'cmsPendaftaranNav' => \App\Http\Controllers\Admin\RegistrationSubmissionController::navItemsFromCms(),
+                'cmsPendaftaranAktifNav' => \App\Http\Controllers\Admin\RegistrationSubmissionController::navAcceptedItemsFromCms(),
+            ]);
         });
     }
 
@@ -158,6 +170,8 @@ class AppServiceProvider extends ServiceProvider
             $items[] = $item;
         }
 
+        $items = self::ensureSingleActivePublicNavItem($items);
+
         if (auth()->check()) {
             $items[] = [
                 'url' => route('dashboard.index'),
@@ -202,6 +216,19 @@ class AppServiceProvider extends ServiceProvider
     private static function isPublicNavActive(string $raw, string $resolvedUrl): bool
     {
         $raw = trim($raw);
+        $linkPath = self::normalizePublicNavPath(
+            PublicCmsUrl::normalizeNavPathForStorage($raw !== '' ? $raw : (parse_url($resolvedUrl, PHP_URL_PATH) ?: '/'))
+        );
+
+        if (preg_match('#^https?://#i', $raw)) {
+            $linkPath = self::normalizePublicNavPath(parse_url($resolvedUrl, PHP_URL_PATH) ?: '/');
+        }
+
+        $routePatterns = self::publicNavRoutePatternsForPath($linkPath);
+        if ($routePatterns !== null) {
+            return request()->routeIs($routePatterns);
+        }
+
         if ($raw !== '' && ! str_contains($raw, '/') && ! preg_match('#^https?://#i', $raw) && Route::has($raw)) {
             return match ($raw) {
                 'home' => request()->routeIs('home'),
@@ -218,14 +245,97 @@ class AppServiceProvider extends ServiceProvider
             };
         }
 
-        $current = '/'.trim(request()->path(), '/');
-        $linkPath = parse_url($resolvedUrl, PHP_URL_PATH) ?: '/';
-        $linkPath = '/'.trim((string) $linkPath, '/');
+        $current = self::normalizePublicNavPath(request()->path());
 
-        if ($linkPath === '/' || $linkPath === '' || $raw === '/' || $raw === 'home' || $raw === '.') {
-            return $current === '/' || $current === '';
+        if ($current === '/') {
+            return $linkPath === '/';
+        }
+
+        if ($linkPath === '/') {
+            return false;
         }
 
         return $current === $linkPath || str_starts_with($current, $linkPath.'/');
+    }
+
+    /** @return list<string>|null */
+    private static function publicNavRoutePatternsForPath(string $linkPath): ?array
+    {
+        return match ($linkPath) {
+            '/' => ['home'],
+            '/profil' => ['profil'],
+            '/struktur' => ['struktur'],
+            '/jadwal' => ['jadwal'],
+            '/pendaftaran' => ['pendaftaran.*'],
+            '/informasi-kegiatan' => ['informasi-kegiatan', 'informasi-kegiatan.show'],
+            '/kontak' => ['kontak'],
+            '/galeri' => ['galeri'],
+            default => null,
+        };
+    }
+
+    private static function normalizePublicNavPath(?string $path): string
+    {
+        $normalized = '/'.trim((string) $path, '/');
+
+        return $normalized === '/' ? '/' : rtrim($normalized, '/');
+    }
+
+    /**
+     * @param  list<array{url: string, label: string, active: bool, outline?: bool, icon: string, children?: list<array{url: string, label: string, active: bool, icon: string}>}>  $items
+     * @return list<array{url: string, label: string, active: bool, outline?: bool, icon: string, children?: list<array{url: string, label: string, active: bool, icon: string}>}>
+     */
+    private static function ensureSingleActivePublicNavItem(array $items): array
+    {
+        $bestIndex = null;
+        $bestScore = -1;
+
+        foreach ($items as $index => $item) {
+            $score = self::publicNavActiveScore($item);
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $bestIndex = $index;
+            }
+        }
+
+        if ($bestIndex === null || $bestScore < 0) {
+            return $items;
+        }
+
+        foreach ($items as $index => &$item) {
+            if ($index === $bestIndex) {
+                continue;
+            }
+
+            $item['active'] = false;
+
+            if (! isset($item['children']) || ! is_array($item['children'])) {
+                continue;
+            }
+
+            foreach ($item['children'] as &$child) {
+                $child['active'] = false;
+            }
+            unset($child);
+        }
+        unset($item);
+
+        return $items;
+    }
+
+    /**
+     * @param  array{url: string, label: string, active: bool, children?: list<array{url: string, label: string, active: bool, icon: string}>}  $item
+     */
+    private static function publicNavActiveScore(array $item): int
+    {
+        if (! ($item['active'] ?? false)) {
+            return -1;
+        }
+
+        $path = self::normalizePublicNavPath(parse_url($item['url'], PHP_URL_PATH) ?: '/');
+        $current = self::normalizePublicNavPath(request()->path());
+        $exact = $path === $current;
+
+        return ($exact ? 1_000_000 : 0) + strlen($path);
     }
 }

@@ -28,12 +28,18 @@ class UserAccountController extends Controller
     {
         $data = $this->validated($request, isCreate: true);
 
-        User::query()->create([
+        $payload = [
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => $data['password'],
             'role' => $data['role'],
-        ]);
+        ];
+
+        if (User::phoneColumnReady()) {
+            $payload['phone'] = $data['phone'];
+        }
+
+        User::query()->create($payload);
 
         return redirect()
             ->route('dashboard.akun.index')
@@ -57,6 +63,9 @@ class UserAccountController extends Controller
 
         $user->name = $data['name'];
         $user->email = $data['email'];
+        if (User::phoneColumnReady()) {
+            $user->phone = $data['phone'] ?? null;
+        }
         $user->role = $data['role'];
 
         if (! empty($data['password'])) {
@@ -92,13 +101,17 @@ class UserAccountController extends Controller
     }
 
     /**
-     * @return array{name: string, email: string, role: string, password?: string}
+     * @return array{name: string, email: string, phone?: string|null, role: string, password?: string}
      */
     private function validated(Request $request, bool $isCreate, ?User $user = null): array
     {
         $passwordRules = $isCreate
             ? ['required', 'confirmed', Password::defaults()]
             : ['nullable', 'confirmed', Password::defaults()];
+
+        $phoneRules = $isCreate
+            ? ['required', 'string', 'max:50']
+            : ['nullable', 'string', 'max:50'];
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -108,9 +121,14 @@ class UserAccountController extends Controller
                 'max:255',
                 Rule::unique('users', 'email')->ignore($user?->id),
             ],
+            'phone' => $phoneRules,
             'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN])],
             'password' => $passwordRules,
         ]);
+
+        if (array_key_exists('phone', $data)) {
+            $data['phone'] = trim((string) $data['phone']) !== '' ? trim((string) $data['phone']) : null;
+        }
 
         if (! $isCreate && empty($data['password'])) {
             unset($data['password']);

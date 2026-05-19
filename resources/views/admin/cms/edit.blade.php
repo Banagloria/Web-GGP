@@ -17,12 +17,23 @@
 @section('title', 'Sunting: '.$pageLabel)
 
 @section('content')
+    @if ($errors->any())
+        <div class="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300" role="alert">
+            <p class="font-medium text-red-200">Perubahan belum tersimpan. Periksa isian berikut:</p>
+            <ul class="mt-2 list-disc space-y-1 pl-5">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <x-admin-edit-page
-        :back-href="route('dashboard.halaman.index')"
-        back-label="Daftar halaman"
+        :back-href="route('dashboard.setting.index')"
+        back-label="Setting"
         icon="fa-solid fa-pen-to-square"
         :title="$pageLabel"
-        :action="route('dashboard.halaman.cms.update', $pageKey)"
+        :action="route('dashboard.setting.cms.update', $pageKey)"
         form-id="cms-page-form"
         enctype="multipart/form-data"
         wide

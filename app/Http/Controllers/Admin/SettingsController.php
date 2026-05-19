@@ -81,7 +81,7 @@ class SettingsController extends Controller
         return $this->adminModalFinished(
             $request,
             'Pengaturan disimpan.',
-            redirect()->route('dashboard.halaman.index')->with('status', 'Pengaturan disimpan.')
+            redirect()->route('dashboard.setting.index')->with('status', 'Pengaturan disimpan.')
         );
     }
 }

@@ -4,11 +4,11 @@
 
 @section('content')
     <x-admin-show-page
-        :back-href="route('dashboard.pendaftaran-jemaat.index')"
+        :back-href="route('dashboard.pendaftaran.index', ['slug' => 'jemaat'])"
         back-label="Daftar jemaat"
         icon="fa-solid fa-user"
         title="Detail jemaat"
-        :edit-url="route('dashboard.pendaftaran-jemaat.edit', $registration)"
+        :edit-url="route('dashboard.pendaftaran.edit', $registration)"
     >
         <x-admin-detail-item label="Nama">{{ $registration->full_name }}</x-admin-detail-item>
         <x-admin-detail-item label="Tempat / tanggal lahir">

@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
@@ -10,6 +11,21 @@ use Throwable;
  */
 final class DeploySafeRuntime
 {
+    public static function ensureUserPhoneColumnIfNeeded(): void
+    {
+        try {
+            if (! Schema::hasTable('users') || Schema::hasColumn('users', 'phone')) {
+                return;
+            }
+
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('phone', 50)->nullable()->after('email');
+            });
+        } catch (Throwable) {
+            // Biarkan controller menangani jika migrasi otomatis gagal.
+        }
+    }
+
     public static function relaxDatabaseDriversIfNeeded(): void
     {
         try {

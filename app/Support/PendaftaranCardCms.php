@@ -128,6 +128,61 @@ final class PendaftaranCardCms
      * @param  array<string, mixed>  $existingDetails
      * @return array<string, mixed>
      */
+    /**
+     * Gabungkan kartu dari form dengan data lama agar kartu tidak hilang saat POST tidak lengkap.
+     *
+     * @param  list<array<string, mixed>>  $submitted
+     * @param  list<array<string, mixed>>  $existing
+     * @return list<array<string, mixed>>
+     */
+    public static function finalizeCardsForSave(array $submitted, array $existing, int $declaredRowCount): array
+    {
+        $submitted = array_values($submitted);
+        $existing = array_values($existing);
+
+        if ($declaredRowCount > 0 && count($submitted) < $declaredRowCount) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'cards' => [
+                    'Data kartu tidak lengkap terkirim ke server. Muat ulang halaman ini, lalu simpan lagi. '
+                    .'Jika masalah berulang, minta hosting menaikkan batas PHP max_input_vars.',
+                ],
+            ]);
+        }
+
+        $submittedKeys = [];
+        foreach ($submitted as $card) {
+            if (! is_array($card)) {
+                continue;
+            }
+            $key = trim((string) ($card['key'] ?? ''));
+            if ($key !== '') {
+                $submittedKeys[] = $key;
+            }
+        }
+
+        $existingByKey = [];
+        foreach ($existing as $card) {
+            if (! is_array($card)) {
+                continue;
+            }
+            $key = trim((string) ($card['key'] ?? ''));
+            if ($key !== '') {
+                $existingByKey[$key] = $card;
+            }
+        }
+
+        $lostKeys = array_diff(array_keys($existingByKey), $submittedKeys);
+        $declaredMatchesSubmitted = $declaredRowCount > 0 && $declaredRowCount === count($submitted);
+
+        if ($lostKeys !== [] && ! $declaredMatchesSubmitted) {
+            foreach ($lostKeys as $lostKey) {
+                $submitted[] = $existingByKey[$lostKey];
+            }
+        }
+
+        return array_values($submitted);
+    }
+
     public static function syncCardDetails(array $cards, array $existingDetails): array
     {
         $activeKeys = [];
@@ -249,32 +304,57 @@ final class PendaftaranCardCms
     {
         $rules = [];
         foreach (self::fieldsFromDetail($detail) as $field) {
-            $name = $field['name'];
-            $type = $field['type'];
-            $required = ! empty($field['required']);
-            $fieldRules = [];
-
-            if ($type === 'file') {
-                $fieldRules[] = $required ? 'required' : 'nullable';
-                $fieldRules[] = 'file';
-                $fieldRules[] = 'max:10240';
-            } else {
-                $fieldRules[] = $required ? 'required' : 'nullable';
-                $fieldRules = match ($type) {
-                    'email' => [...$fieldRules, 'email', 'max:255'],
-                    'tel' => [...$fieldRules, 'string', 'max:50'],
-                    'date' => [...$fieldRules, 'date'],
-                    'number' => [...$fieldRules, 'numeric'],
-                    'textarea' => [...$fieldRules, 'string', 'max:5000'],
-                    'select' => [...$fieldRules, 'string', 'max:255'],
-                    default => [...$fieldRules, 'string', 'max:255'],
-                };
-            }
-
-            $rules[$name] = $fieldRules;
+            $rules[$field['name']] = self::validationRulesForField($field, false);
         }
 
         return $rules;
+    }
+
+    /**
+     * Aturan validasi untuk pembaruan admin — berkas opsional jika sudah ada.
+     *
+     * @param  array<string, mixed>  $detail
+     * @return array<string, list<string>>
+     */
+    public static function validationRulesFromDetailForAdminUpdate(array $detail): array
+    {
+        $rules = [];
+        foreach (self::fieldsFromDetail($detail) as $field) {
+            $rules[$field['name']] = self::validationRulesForField($field, true);
+        }
+
+        return $rules;
+    }
+
+    /**
+     * @param  array<string, mixed>  $field
+     * @return list<string>
+     */
+    private static function validationRulesForField(array $field, bool $adminUpdate): array
+    {
+        $name = $field['name'];
+        $type = $field['type'];
+        $required = ! empty($field['required']);
+        $fieldRules = [];
+
+        if ($type === 'file') {
+            $fieldRules[] = ($adminUpdate || ! $required) ? 'nullable' : 'required';
+            $fieldRules[] = 'file';
+            $fieldRules[] = 'max:10240';
+        } else {
+            $fieldRules[] = $required ? 'required' : 'nullable';
+            $fieldRules = match ($type) {
+                'email' => [...$fieldRules, 'email', 'max:255'],
+                'tel' => [...$fieldRules, 'string', 'max:50'],
+                'date' => [...$fieldRules, 'date'],
+                'number' => [...$fieldRules, 'numeric'],
+                'textarea' => [...$fieldRules, 'string', 'max:5000'],
+                'select' => [...$fieldRules, 'string', 'max:255'],
+                default => [...$fieldRules, 'string', 'max:255'],
+            };
+        }
+
+        return $fieldRules;
     }
 
     public static function isValidSlug(string $slug): bool
@@ -343,6 +423,94 @@ final class PendaftaranCardCms
             $prefix.'_h1',
             $prefix.'_intro',
             $prefix.'_submit',
+        ];
+    }
+
+    /**
+     * Hapus baris template kosong agar validasi tidak gagal pada input yang tidak terisi.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    public static function pruneDetailPayloadForValidation(array $payload): array
+    {
+        if (isset($payload['sections']) && is_array($payload['sections'])) {
+            $sections = [];
+
+            foreach ($payload['sections'] as $section) {
+                if (! is_array($section)) {
+                    continue;
+                }
+
+                unset($section['groups']);
+
+                $fields = $section['fields'] ?? [];
+                if (is_array($fields)) {
+                    $normalizedFields = [];
+                    foreach (AdminRepeatableFields::pruneTemplateRows($fields, ['name']) as $field) {
+                        if (! is_array($field)) {
+                            continue;
+                        }
+                        $required = $field['required'] ?? '0';
+                        $field['required'] = ($required === true || $required === 1 || $required === '1') ? '1' : '0';
+                        $normalizedFields[] = $field;
+                    }
+                    $section['fields'] = $normalizedFields;
+                }
+
+                if (($section['fields'] ?? []) === []) {
+                    continue;
+                }
+
+                $sections[] = $section;
+            }
+
+            $payload['sections'] = array_values($sections);
+        }
+
+        $panel = $payload['info_panel'] ?? [];
+        if (! is_array($panel)) {
+            $panel = [];
+        }
+
+        if (isset($panel['steps']) && is_array($panel['steps'])) {
+            $panel['steps'] = AdminRepeatableFields::pruneStringList($panel['steps']);
+        }
+
+        if (isset($panel['tips']) && is_array($panel['tips'])) {
+            $panel['tips'] = AdminRepeatableFields::pruneTemplateRows($panel['tips'], ['text']);
+        }
+
+        $payload['info_panel'] = $panel;
+
+        return $payload;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function validationAttributesForCard(): array
+    {
+        return [
+            'title' => 'judul halaman (H1)',
+            'leaf_label' => 'label breadcrumb akhir',
+            'form_header.title' => 'judul header formulir',
+            'consent.text' => 'teks persetujuan',
+            'consent.submit_label' => 'label tombol kirim',
+            'info_panel.title' => 'judul panel informasi',
+            'info_panel.tips_heading' => 'judul blok tips',
+            'info_panel.steps' => 'alur pendaftaran',
+            'info_panel.steps.*' => 'langkah alur',
+            'info_panel.tips' => 'daftar tips',
+            'info_panel.tips.*.text' => 'teks tips',
+            'sections' => 'bagian formulir',
+            'sections.*.key' => 'kunci bagian',
+            'sections.*.title' => 'judul bagian',
+            'sections.*.fields' => 'input di bagian',
+            'sections.*.fields.*.name' => 'nama field (sistem)',
+            'sections.*.fields.*.label' => 'label field',
+            'sections.*.fields.*.type' => 'tipe field',
+            'sections.*.fields.*.width' => 'lebar field',
         ];
     }
 

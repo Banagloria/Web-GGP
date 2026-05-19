@@ -17,7 +17,10 @@
 </div>
 
 @php
-    $__pendaftaranCards = $data['cards'] ?? [];
+    $__pendaftaranCards = old('cards');
+    if (! is_array($__pendaftaranCards)) {
+        $__pendaftaranCards = $data['cards'] ?? [];
+    }
     if (! is_array($__pendaftaranCards) || count($__pendaftaranCards) === 0) {
         $__pendaftaranCards = [
             ['key' => 'c0', 'title' => '', 'description' => '', 'icon' => '', 'cta_label' => 'Isi formulir', 'url' => ''],
@@ -28,12 +31,14 @@
 <div class="mt-6 flex flex-wrap justify-end gap-2">
     <button
         type="button"
-        id="cms-pendaftaran-cards-add"
+        data-cms-pendaftaran-cards-add
         class="public-btn-hover rounded-md border border-church-gold/40 bg-church-gold/10 px-3 py-1.5 text-xs font-semibold text-church-gold"
     >
         Tambah kartu pendaftaran
     </button>
 </div>
+
+<input type="hidden" name="cards_row_count" id="cms-pendaftaran-cards-row-count" value="{{ count($__pendaftaranCards) }}">
 
 <div id="cms-pendaftaran-cards-wrap" class="mt-4 space-y-4">
 @foreach ($__pendaftaranCards as $i => $card)
@@ -45,7 +50,7 @@
             <div class="flex flex-wrap items-center gap-2">
                 @if (! empty($card['key']))
                     @include('admin.partials.btn', [
-                        'href' => route('dashboard.halaman.pendaftaran.kartu.edit', $card['key']),
+                        'href' => route('dashboard.setting.pendaftaran.kartu.edit', $card['key']),
                         'variant' => 'secondary',
                         'size' => 'sm',
                         'icon' => 'fa-solid fa-file-lines',
@@ -101,90 +106,4 @@
 @endforeach
 </div>
 
-<script>
-(function () {
-    var wrap = document.getElementById('cms-pendaftaran-cards-wrap');
-    var addBtn = document.getElementById('cms-pendaftaran-cards-add');
-    if (!wrap || !addBtn) return;
-
-    var maxRows = 12;
-
-    function rows() {
-        return wrap.querySelectorAll('.cms-pendaftaran-card-row');
-    }
-
-    function reindexCards() {
-        rows().forEach(function (row, i) {
-            row.querySelectorAll('[name^="cards["]').forEach(function (el) {
-                el.name = el.name.replace(/cards\[\d+\]/, 'cards[' + i + ']');
-            });
-        });
-    }
-
-    function updateAddRemoveUi() {
-        var n = rows().length;
-        addBtn.disabled = n >= maxRows;
-        addBtn.classList.toggle('opacity-40', n >= maxRows);
-        addBtn.classList.toggle('pointer-events-none', n >= maxRows);
-        rows().forEach(function (row) {
-            var rm = row.querySelector('[data-cms-pendaftaran-card-remove]');
-            if (!rm) return;
-            rm.disabled = n <= 1;
-            rm.classList.toggle('opacity-40', n <= 1);
-            rm.classList.toggle('pointer-events-none', n <= 1);
-        });
-    }
-
-    function clearCardRow(row) {
-        var keyInp = row.querySelector('input[name$="[key]"]');
-        if (keyInp) keyInp.value = 'c' + Date.now();
-        row.querySelectorAll('input:not([type="hidden"]), textarea').forEach(function (inp) {
-            if (inp.name && inp.name.endsWith('[key]')) return;
-            inp.value = '';
-        });
-        var preview = row.querySelector('[data-cms-pendaftaran-slug-preview]');
-        if (preview) preview.textContent = '…';
-    }
-
-    wrap.addEventListener('input', function (e) {
-        var slugInp = e.target.closest('input[name$="[url]"]');
-        if (!slugInp || !wrap.contains(slugInp)) return;
-        var row = slugInp.closest('.cms-pendaftaran-card-row');
-        var preview = row ? row.querySelector('[data-cms-pendaftaran-slug-preview]') : null;
-        if (preview) preview.textContent = slugInp.value.trim() || '…';
-    });
-
-    wrap.addEventListener('click', function (e) {
-        var t = e.target.closest('[data-cms-pendaftaran-card-remove]');
-        if (!t || !wrap.contains(t) || t.disabled) return;
-        e.preventDefault();
-        var row = t.closest('.cms-pendaftaran-card-row');
-        if (!row) return;
-        var cardTitle = row.querySelector('input[name$="[title]"]');
-        var titleLabel = cardTitle && cardTitle.value.trim() !== '' ? cardTitle.value.trim() : 'kartu ini';
-        window.adminConfirmAction({
-            title: 'Hapus kartu pendaftaran?',
-            message: 'Kartu "' + titleLabel + '" akan dihapus. Simpan halaman agar perubahan permanen.',
-            confirmLabel: 'Hapus kartu',
-        }, function () {
-            row.remove();
-            reindexCards();
-            updateAddRemoveUi();
-        });
-    });
-
-    addBtn.addEventListener('click', function () {
-        if (addBtn.disabled) return;
-        var list = rows();
-        if (list.length >= maxRows) return;
-        var last = list[list.length - 1];
-        var clone = last.cloneNode(true);
-        wrap.appendChild(clone);
-        reindexCards();
-        clearCardRow(rows()[rows().length - 1]);
-        updateAddRemoveUi();
-    });
-
-    updateAddRemoveUi();
-})();
-</script>
+@include('admin.cms.partials.pendaftaran-cards-script')

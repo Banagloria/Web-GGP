@@ -4,8 +4,8 @@
 
 @section('content')
     <x-admin-edit-page
-        :back-href="route('dashboard.halaman.index')"
-        back-label="Daftar halaman"
+        :back-href="route('dashboard.setting.index')"
+        back-label="Setting"
         icon="fa-solid fa-gear"
         title="Pengaturan situs"
         :action="route('dashboard.pengaturan.update')"

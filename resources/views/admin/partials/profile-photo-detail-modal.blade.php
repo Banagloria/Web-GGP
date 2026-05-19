@@ -21,6 +21,7 @@
                 </h2>
                 <p id="profile-photo-detail-name" class="mt-1 break-words text-sm font-semibold text-church-fg"></p>
                 <p id="profile-photo-detail-email" class="mt-0.5 break-all text-xs text-slate-400 sm:text-sm"></p>
+                <p id="profile-photo-detail-phone" class="mt-1 hidden break-all text-xs text-slate-300 sm:text-sm"></p>
             </div>
             <button
                 type="button"

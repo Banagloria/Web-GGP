@@ -87,16 +87,17 @@
                     </div>
                 </div>
                 @if ($hasActionColumn)
-                    <div class="relative z-[1] mx-4 mb-4 flex items-center gap-3 border-t border-white/10 pt-3 sm:mx-5">
+                    <div class="relative z-[1] mx-4 mb-4 border-t border-white/10 pt-3 sm:mx-5">
+                        <div class="admin-table-actions admin-table-actions--n3">
                         <a
                             href="{{ route('dashboard.jadwal-ibadah.edit', $row) }}"
-                            class="admin-btn-icon admin-btn-icon--edit size-9"
+                            class="admin-btn-icon admin-btn-icon--gold size-9"
                             title="Edit"
                             aria-label="Edit jadwal"
                         >
                             <i class="fa-solid fa-pen text-sm" aria-hidden="true"></i>
                         </a>
-                        <form method="post" action="{{ route('dashboard.jadwal-ibadah.destroy', $row) }}" class="inline">
+                        <form method="post" action="{{ route('dashboard.jadwal-ibadah.destroy', $row) }}" class="contents">
                             @csrf
                             @method('DELETE')
                             <button
@@ -112,8 +113,9 @@
                                 <i class="fa-solid fa-trash text-sm" aria-hidden="true"></i>
                             </button>
                         </form>
+                        </div>
                         @unless ($row->is_active)
-                            <span class="rounded bg-slate-700 px-2 py-0.5 text-xs text-slate-300">Nonaktif</span>
+                            <span class="mt-2 inline-block rounded bg-slate-700 px-2 py-0.5 text-xs text-slate-300">Nonaktif</span>
                         @endunless
                     </div>
                 @endif
@@ -168,16 +170,16 @@
                                             <span class="text-xs font-normal text-slate-400">{{ WorshipSchedulePartitionService::relativeTimeLabel($row) }}</span>
                                         </span>
                                     @elseif ($hasActionColumn && $colIndex === $lastHeaderIndex)
-                                        <div class="flex items-center gap-2">
+                                        <div class="admin-table-actions admin-table-actions--n3">
                                             <a
                                                 href="{{ route('dashboard.jadwal-ibadah.edit', $row) }}"
-                                                class="admin-btn-icon admin-btn-icon--edit"
+                                                class="admin-btn-icon admin-btn-icon--gold"
                                                 title="Edit"
                                                 aria-label="Edit jadwal"
                                             >
                                                 <i class="fa-solid fa-pen text-sm" aria-hidden="true"></i>
                                             </a>
-                                            <form method="post" action="{{ route('dashboard.jadwal-ibadah.destroy', $row) }}" class="inline">
+                                            <form method="post" action="{{ route('dashboard.jadwal-ibadah.destroy', $row) }}" class="contents">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button

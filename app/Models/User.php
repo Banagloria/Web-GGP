@@ -14,7 +14,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'profile_photo_url'])]
+#[Fillable(['name', 'email', 'phone', 'password', 'role', 'profile_photo_url'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -89,6 +89,23 @@ class User extends Authenticatable
 
     private static ?bool $profilePhotoColumnReadyCache = null;
 
+    private static ?bool $phoneColumnReadyCache = null;
+
+    public static function phoneColumnReady(): bool
+    {
+        if (static::$phoneColumnReadyCache !== null) {
+            return static::$phoneColumnReadyCache;
+        }
+
+        try {
+            static::$phoneColumnReadyCache = Schema::hasColumn((new static)->getTable(), 'phone');
+        } catch (Throwable) {
+            static::$phoneColumnReadyCache = false;
+        }
+
+        return static::$phoneColumnReadyCache;
+    }
+
     public static function profilePhotoColumnReady(): bool
     {
         if (static::$profilePhotoColumnReadyCache !== null) {
@@ -118,5 +135,14 @@ class User extends Authenticatable
     public function avatarInitial(): string
     {
         return strtoupper(substr((string) $this->name, 0, 1)) ?: 'A';
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(function (User $user): void {
+            if (! static::phoneColumnReady()) {
+                unset($user->attributes['phone']);
+            }
+        });
     }
 }

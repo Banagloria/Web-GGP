@@ -35,7 +35,15 @@
                 'persistedUrl' => $user->profile_photo_url ?? '',
                 'userName' => old('name', $user->name),
                 'userEmail' => $user->email,
+                'userPhone' => old('phone', $user->phone),
             ])
+        @endif
+
+        @if (! ($phoneColumnReady ?? true))
+            <p class="public-card-hover rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                Simpan nomor HP belum aktif di database server. Minta pengelola server menjalankan:
+                <code class="mt-1 block break-all text-xs text-amber-100">php artisan church:ensure-phone-column</code>
+            </p>
         @endif
 
         {{-- Data akun --}}
@@ -59,22 +67,57 @@
                 </div>
             </fieldset>
 
+            @if ($phoneColumnReady ?? true)
+                <fieldset class="min-w-0 space-y-4">
+                    <x-admin-field-label as="legend">Informasi kontak</x-admin-field-label>
+                    <p class="text-sm leading-relaxed text-slate-400">Nomor ini ditampilkan untuk keperluan koordinasi antar pengurus gereja.</p>
+                    <div class="min-w-0">
+                        <x-admin-field-label>Nomor HP / WhatsApp</x-admin-field-label>
+                        <input
+                            type="tel"
+                            name="phone"
+                            value="{{ old('phone', $user->phone) }}"
+                            autocomplete="tel"
+                            inputmode="tel"
+                            placeholder="08xxxxxxxxxx"
+                            class="{{ $profileInputClass }}"
+                        >
+                        @error('phone')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+                    </div>
+                </fieldset>
+            @endif
+
             <fieldset class="min-w-0 space-y-4">
                 <x-admin-field-label as="legend">Keamanan</x-admin-field-label>
                 <p class="text-sm leading-relaxed text-slate-400">Isi kata sandi saat ini jika ingin mengubah kata sandi.</p>
                 <div class="min-w-0">
-                    <x-admin-field-label>Kata sandi saat ini</x-admin-field-label>
-                    <input type="password" name="current_password" autocomplete="current-password" class="{{ $profileInputClass }}">
+                    <x-admin-field-label for="current_password">Kata sandi saat ini</x-admin-field-label>
+                    <x-password-input
+                        name="current_password"
+                        id="current_password"
+                        autocomplete="current-password"
+                        :input-class="$profileInputClass"
+                    />
                     @error('current_password')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
                 <div class="min-w-0">
-                    <x-admin-field-label>Kata sandi baru</x-admin-field-label>
-                    <input type="password" name="password" autocomplete="new-password" class="{{ $profileInputClass }}">
+                    <x-admin-field-label for="password">Kata sandi baru</x-admin-field-label>
+                    <x-password-input
+                        name="password"
+                        id="password"
+                        autocomplete="new-password"
+                        :input-class="$profileInputClass"
+                    />
                     @error('password')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
                 </div>
                 <div class="min-w-0">
-                    <x-admin-field-label>Konfirmasi kata sandi baru</x-admin-field-label>
-                    <input type="password" name="password_confirmation" autocomplete="new-password" class="{{ $profileInputClass }}">
+                    <x-admin-field-label for="password_confirmation">Konfirmasi kata sandi baru</x-admin-field-label>
+                    <x-password-input
+                        name="password_confirmation"
+                        id="password_confirmation"
+                        autocomplete="new-password"
+                        :input-class="$profileInputClass"
+                    />
                 </div>
             </fieldset>
         </div>
@@ -100,12 +143,16 @@
             var viewBtn = document.getElementById('profile-photo-view-btn');
             var hintEl = document.getElementById('profile-photo-hint');
             var nameInput = form.querySelector('input[name="name"]');
+            var phoneInput = form.querySelector('input[name="phone"]');
             var displayName = document.getElementById('profile-photo-display-name');
             var displayEmail = document.getElementById('profile-photo-display-email');
+            var displayPhone = document.getElementById('profile-photo-display-phone');
+            var displayPhoneText = document.getElementById('profile-photo-display-phone-text');
             var detailModal = document.getElementById('profile-photo-detail-modal');
             var detailImg = document.getElementById('profile-photo-detail-img');
             var detailName = document.getElementById('profile-photo-detail-name');
             var detailEmail = document.getElementById('profile-photo-detail-email');
+            var detailPhone = document.getElementById('profile-photo-detail-phone');
             var detailClose = document.getElementById('profile-photo-detail-close');
             var detailBackdrop = document.getElementById('profile-photo-detail-backdrop');
             var editorRoot = document.querySelector('[data-profile-photo-editor]');
@@ -156,6 +203,25 @@
                 displayName.textContent = nameInput.value.trim() || displayName.textContent;
             }
 
+            function syncDisplayPhone() {
+                if (!phoneInput) return;
+                var phone = phoneInput.value.trim();
+                if (displayPhoneText) displayPhoneText.textContent = phone;
+                if (displayPhone) {
+                    displayPhone.classList.toggle('hidden', phone === '');
+                }
+                if (editorRoot) {
+                    editorRoot.setAttribute('data-user-phone', phone);
+                }
+            }
+
+            function getDisplayPhone() {
+                if (phoneInput && phoneInput.value.trim()) return phoneInput.value.trim();
+                if (displayPhoneText && displayPhoneText.textContent.trim()) return displayPhoneText.textContent.trim();
+                if (editorRoot) return editorRoot.getAttribute('data-user-phone') || '';
+                return '';
+            }
+
             function setPhotoViewEnabled(enabled) {
                 if (!viewBtn) return;
                 viewBtn.disabled = !enabled;
@@ -169,6 +235,16 @@
                 detailImg.alt = name ? 'Foto profil ' + name : 'Foto profil';
                 if (detailName) detailName.textContent = name;
                 if (detailEmail) detailEmail.textContent = getDisplayEmail();
+                var phone = getDisplayPhone();
+                if (detailPhone) {
+                    if (phone !== '') {
+                        detailPhone.textContent = phone;
+                        detailPhone.classList.remove('hidden');
+                    } else {
+                        detailPhone.textContent = '';
+                        detailPhone.classList.add('hidden');
+                    }
+                }
                 detailModal.classList.remove('hidden');
                 detailModal.classList.add('flex');
                 detailModal.setAttribute('aria-hidden', 'false');
@@ -209,6 +285,12 @@
             if (nameInput) {
                 nameInput.addEventListener('input', syncDisplayName);
             }
+
+            if (phoneInput) {
+                phoneInput.addEventListener('input', syncDisplayPhone);
+            }
+
+            syncDisplayPhone();
 
             if (viewBtn) {
                 viewBtn.addEventListener('click', function () {

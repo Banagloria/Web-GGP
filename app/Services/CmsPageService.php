@@ -55,6 +55,15 @@ class CmsPageService
 
         $merged = array_replace_recursive($base, $stored);
 
+        if ($pageKey === 'pendaftaran') {
+            if (isset($stored['cards']) && is_array($stored['cards'])) {
+                $merged['cards'] = $stored['cards'];
+            }
+            if (isset($stored['card_details']) && is_array($stored['card_details'])) {
+                $merged['card_details'] = $stored['card_details'];
+            }
+        }
+
         if ($pageKey === 'beranda') {
             foreach (['church_name_line1', 'church_name_line2', 'site_logo_url'] as $k) {
                 if (! array_key_exists($k, $stored)) {

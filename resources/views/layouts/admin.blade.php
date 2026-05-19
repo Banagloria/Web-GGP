@@ -132,7 +132,7 @@
             <div class="relative z-10 flex w-full min-w-0 max-w-full flex-nowrap items-center gap-2 px-3 py-3 max-[380px]:gap-1.5 sm:gap-4 sm:px-5 sm:py-4 md:mx-auto md:max-w-6xl md:gap-5">
                 <div class="flex min-h-0 min-w-0 flex-1 items-center gap-2 sm:gap-5">
                     <a href="{{ route('dashboard.index') }}" class="shrink-0 rounded-xl outline-none transition focus-visible:ring-2 focus-visible:ring-church-gold focus-visible:ring-offset-2 focus-visible:ring-offset-church-navy sm:rounded-2xl" aria-label="Dashboard">
-                        <div class="flex size-11 items-center justify-center rounded-xl border border-white/25 bg-gradient-to-br from-white/15 to-white/5 shadow-lg shadow-black/20 ring-1 ring-church-gold/35 backdrop-blur-sm sm:size-14 sm:rounded-2xl md:size-16">
+                        <div class="flex size-11 items-center justify-center overflow-hidden sm:size-14 md:size-16">
                             @include('partials.site-logo-or-mark')
                         </div>
                     </a>
@@ -221,32 +221,16 @@
         <div class="admin-layout-main flex min-h-0 min-w-0 w-full max-w-full flex-1 basis-0 flex-col bg-gradient-to-br from-church-bg/90 via-church-surface/95 to-church-bg/90 max-md:h-auto md:min-h-0 md:overflow-x-clip md:overflow-y-auto md:overscroll-contain">
             @include('admin.partials.main-body')
 
-            <footer class="admin-layout-footer mt-auto w-full min-w-0 shrink-0 border-t border-white/10 bg-gradient-to-r from-church-navy via-church-gold/10 to-church-navy-mid pb-[env(safe-area-inset-bottom,0px)] text-white shadow-inner max-md:shrink-0">
-                <div class="mx-auto grid w-full max-w-full min-w-0 gap-6 px-4 py-8 text-sm sm:gap-8 sm:px-6 sm:py-10 md:grid-cols-3 md:gap-10 md:px-10 md:py-12 lg:px-14 lg:py-14">
-                    <div>
-                        <h3 class="mb-3 border-b border-white/25 pb-2 font-serif font-semibold text-church-gold">Kontak Gereja</h3>
-                        <p class="text-white/90">&#9742; {{ $churchPhone }}</p>
-                        <p class="mt-2 text-white/90">&#9993; {{ $churchEmail }}</p>
-                    </div>
-                    <div>
-                        <h3 class="mb-3 border-b border-white/25 pb-2 font-serif font-semibold text-church-gold">Alamat Gereja</h3>
-                        <p class="text-white/90">&#128205; {{ $churchAddress }}</p>
-                    </div>
-                    <div>
-                        <h3 class="mb-3 border-b border-white/25 pb-2 font-serif font-semibold text-church-gold">Ikuti Kami</h3>
-                        <div class="flex flex-wrap gap-2">
-                            <a href="{{ $socialFacebook }}" class="flex size-9 items-center justify-center rounded-full bg-blue-700 text-xs transition   " aria-label="Facebook">f</a>
-                            <a href="{{ $socialTwitter }}" class="flex size-9 items-center justify-center rounded-full bg-sky-500 text-xs transition   " aria-label="X">x</a>
-                            <a href="{{ $socialInstagram }}" class="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-amber-400 text-xs transition   " aria-label="Instagram">in</a>
-                            <a href="{{ $socialYoutube }}" class="flex size-9 items-center justify-center rounded-full bg-red-600 text-xs transition   " aria-label="YouTube">▶</a>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+            @include('partials.site-footer', [
+                'footerExtraClass' => 'admin-layout-footer w-full min-w-0 shrink-0 pb-[env(safe-area-inset-bottom,0px)] max-md:shrink-0',
+                'footerHideBranding' => true,
+            ])
         </div>
     </div>
     @include('partials.nav-disclosure-script')
+    @include('admin.partials.data-table-mobile-script')
     @include('admin.partials.confirm-dialog')
+    @include('admin.partials.admin-form-fix')
     @stack('scripts')
     @include('partials.flash-success-script')
 </body>

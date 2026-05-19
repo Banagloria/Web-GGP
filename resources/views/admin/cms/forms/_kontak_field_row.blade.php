@@ -10,7 +10,7 @@
         <button type="button" data-cms-kontak-remove class="text-xs text-red-400 hover:underline">Hapus field</button>
     </div>
     <div class="grid gap-4 sm:grid-cols-3">
-        <div><x-admin-field-label class="text-xs text-slate-400">Nama atribut field</x-admin-field-label><input name="form_fields[{{ $i }}][name]" value="{{ old('form_fields.'.$i.'.name', $f['name'] ?? '') }}" required pattern="[a-zA-Z0-9_]+" class="mt-1 w-full rounded-md border border-white/15 bg-church-surface font-mono text-sm text-church-fg"></div>
+        <div><x-admin-field-label class="text-xs text-slate-400">Nama atribut field</x-admin-field-label><input name="form_fields[{{ $i }}][name]" value="{{ old('form_fields.'.$i.'.name', $f['name'] ?? '') }}" pattern="[a-zA-Z0-9_]+" class="mt-1 w-full rounded-md border border-white/15 bg-church-surface font-mono text-sm text-church-fg"></div>
         <div>
             <x-admin-field-label class="text-xs text-slate-400">Tipe</x-admin-field-label>
             <select name="form_fields[{{ $i }}][type]" class="mt-1 w-full rounded-md border border-white/15 bg-church-surface text-sm text-church-fg">
@@ -28,7 +28,7 @@
             </select>
         </div>
     </div>
-    <div><x-admin-field-label class="text-xs text-slate-400">Label</x-admin-field-label><input name="form_fields[{{ $i }}][label]" value="{{ old('form_fields.'.$i.'.label', $f['label'] ?? '') }}" required class="mt-1 w-full rounded-md border border-white/15 bg-church-surface text-sm text-church-fg"></div>
+    <div><x-admin-field-label class="text-xs text-slate-400">Label</x-admin-field-label><input name="form_fields[{{ $i }}][label]" value="{{ old('form_fields.'.$i.'.label', $f['label'] ?? '') }}" class="mt-1 w-full rounded-md border border-white/15 bg-church-surface text-sm text-church-fg"></div>
     <div><x-admin-field-label class="text-xs text-slate-400">Placeholder</x-admin-field-label><input name="form_fields[{{ $i }}][placeholder]" value="{{ old('form_fields.'.$i.'.placeholder', $f['placeholder'] ?? '') }}" class="mt-1 w-full rounded-md border border-white/15 bg-church-surface text-sm text-church-fg"></div>
     <div class="flex items-center gap-2">
         <input type="hidden" name="form_fields[{{ $i }}][required]" value="0">

@@ -50,10 +50,22 @@
         {{ $before }}
     @endif
 
+    @if ($errors->any())
+        <div class="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300" role="alert">
+            <p class="font-medium text-red-200">Perubahan belum tersimpan. Periksa isian berikut:</p>
+            <ul class="mt-2 list-disc space-y-1 pl-5">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <form
         id="{{ $formId }}"
         method="post"
         action="{{ $action }}"
+        data-admin-main-form
         @if ($enctype) enctype="{{ $enctype }}" @endif
         {{ $attributes->merge(['class' => 'space-y-5']) }}
     >
@@ -69,29 +81,36 @@
         @endif
 
         @unless (isset($actions))
-            <div class="mt-5 flex w-full min-w-0 flex-col-reverse gap-2 border-t border-white/10 pt-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:border-0 sm:pt-0">
-            @include('admin.partials.btn', [
-                'href' => $cancelHref,
-                'variant' => 'secondary',
-                'icon' => 'fa-solid fa-xmark',
-                'label' => $cancelLabel,
-                'extraClass' => 'w-full justify-center sm:w-auto',
-            ])
-            @if ($deleteUrl)
-                @include('admin.partials.table-actions', [
-                    'deleteUrl' => $deleteUrl,
-                    'deleteTitle' => $deleteTitle,
-                    'deleteMessage' => $deleteMessage,
-                    'extraClass' => 'w-full justify-center sm:w-auto',
+            <div class="admin-page-actions border-t border-white/10 pt-4 sm:border-0 sm:pt-0">
+                @include('admin.partials.btn', [
+                    'href' => $cancelHref,
+                    'variant' => 'secondary',
+                    'icon' => 'fa-solid fa-xmark',
+                    'label' => $cancelLabel,
+                    'extraClass' => 'shrink-0 whitespace-nowrap',
                 ])
-            @endif
-            @include('admin.partials.btn', [
-                'type' => 'submit',
-                'variant' => 'primary',
-                'icon' => 'fa-solid fa-check',
-                'label' => $submitLabel,
-                'extraClass' => 'w-full justify-center sm:w-auto',
-            ])
+                @include('admin.partials.btn', [
+                    'type' => 'submit',
+                    'variant' => 'primary',
+                    'icon' => 'fa-solid fa-check',
+                    'label' => $submitLabel,
+                    'extraClass' => 'shrink-0 whitespace-nowrap',
+                ])
+                @if ($deleteUrl)
+                    @include('admin.partials.btn', [
+                        'formAction' => $deleteUrl,
+                        'method' => 'DELETE',
+                        'variant' => 'danger-solid',
+                        'icon' => 'fa-solid fa-trash',
+                        'label' => 'Hapus',
+                        'extraClass' => 'shrink-0 whitespace-nowrap',
+                        'confirmSubmit' => true,
+                        'confirmVariant' => 'delete',
+                        'confirmTitle' => $deleteTitle,
+                        'confirmMessage' => $deleteMessage,
+                        'confirmLabel' => 'Ya, hapus',
+                    ])
+                @endif
             </div>
         @else
             {{ $actions }}

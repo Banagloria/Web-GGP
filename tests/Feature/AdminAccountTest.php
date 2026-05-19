@@ -31,6 +31,7 @@ class AdminAccountTest extends TestCase
 
         $response = $this->actingAs($admin)->put(route('dashboard.profil-akun.update'), [
             'name' => 'Admin Baru',
+            'phone' => '081234567890',
         ]);
 
         $response->assertRedirect(route('dashboard.profil-akun.edit'));
@@ -38,6 +39,7 @@ class AdminAccountTest extends TestCase
         $this->assertDatabaseHas('users', [
             'id' => $admin->id,
             'name' => 'Admin Baru',
+            'phone' => '081234567890',
         ]);
     }
 
@@ -96,6 +98,7 @@ class AdminAccountTest extends TestCase
         $createResponse = $this->actingAs($admin)->post(route('dashboard.akun.store'), [
             'name' => 'Admin Ketiga',
             'email' => 'ketiga@example.test',
+            'phone' => '081298765432',
             'role' => User::ROLE_ADMIN,
             'password' => 'sandi-admin',
             'password_confirmation' => 'sandi-admin',
@@ -104,6 +107,7 @@ class AdminAccountTest extends TestCase
         $createResponse->assertRedirect(route('dashboard.akun.index'));
         $this->assertDatabaseHas('users', [
             'email' => 'ketiga@example.test',
+            'phone' => '081298765432',
             'role' => 'admin',
         ]);
 
@@ -114,6 +118,7 @@ class AdminAccountTest extends TestCase
             ->put(route('dashboard.akun.update', $created), [
                 'name' => 'Admin Ketiga Diubah',
                 'email' => 'ketiga@example.test',
+                'phone' => '081211112222',
                 'role' => User::ROLE_ADMIN,
             ])
             ->assertRedirect(route('dashboard.akun.index'));
@@ -121,6 +126,7 @@ class AdminAccountTest extends TestCase
         $this->assertDatabaseHas('users', [
             'id' => $created->id,
             'name' => 'Admin Ketiga Diubah',
+            'phone' => '081211112222',
         ]);
     }
 

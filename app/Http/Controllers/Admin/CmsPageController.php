@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
 use App\Services\CmsPageService;
 use App\Services\WorshipSchedulePartitionService;
+use App\Support\AdminRepeatableFields;
 use App\Support\CmsContentBlocks;
 use App\Support\CmsPageIconDefaults;
 use App\Support\CmsPublicPageDefaults;
@@ -84,7 +85,7 @@ class CmsPageController extends Controller
             $this->syncBerandaHeroVisionToSiteSettings($validated);
         }
 
-        return redirect()->route('dashboard.halaman.cms.edit', $pageKey)->with('status', 'Perubahan disimpan.');
+        return redirect()->route('dashboard.setting.cms.edit', $pageKey)->with('status', 'Perubahan disimpan.');
     }
 
     public function editPendaftaranCard(string $cardKey): View
@@ -108,7 +109,14 @@ class CmsPageController extends Controller
         $existing = CmsPageService::merged('pendaftaran');
         PendaftaranCardCms::assertCardKey($cardKey, $existing);
 
-        $validated = $request->validate(PendaftaranCardCms::validationRulesForCard($cardKey));
+        $payload = PendaftaranCardCms::pruneDetailPayloadForValidation($request->all());
+        $request->replace($payload);
+
+        $validated = $request->validate(
+            PendaftaranCardCms::validationRulesForCard($cardKey),
+            [],
+            PendaftaranCardCms::validationAttributesForCard()
+        );
 
         $cardDetails = is_array($existing['card_details'] ?? null) ? $existing['card_details'] : [];
         $cardDetails[$cardKey] = PendaftaranCardCms::normalizeValidatedDetail($cardKey, $validated);
@@ -123,7 +131,7 @@ class CmsPageController extends Controller
         CmsPageService::save('pendaftaran', $existing);
 
         return redirect()
-            ->route('dashboard.halaman.pendaftaran.kartu.edit', $cardKey)
+            ->route('dashboard.setting.pendaftaran.kartu.edit', $cardKey)
             ->with('status', 'Detail kartu disimpan.');
     }
 
@@ -161,11 +169,19 @@ class CmsPageController extends Controller
      */
     private function validatedBeranda(Request $request): array
     {
+        AdminRepeatableFields::replaceInRequest($request, [
+            'hero_buttons' => AdminRepeatableFields::pruneTemplateRows($request->input('hero_buttons', []), ['label', 'url']),
+            'sidebar_cards' => AdminRepeatableFields::pruneTemplateRows($request->input('sidebar_cards', []), ['title']),
+            'nav' => AdminRepeatableFields::pruneTemplateRows($request->input('nav', []), ['label']),
+            'footer_quick_links' => AdminRepeatableFields::pruneTemplateRows($request->input('footer_quick_links', []), ['label']),
+            'footer_social_links' => AdminRepeatableFields::pruneTemplateRows($request->input('footer_social_links', []), ['label', 'url']),
+        ]);
+
         $rules = [
             'church_name_line1' => ['required', 'string', 'max:255'],
             'church_name_line2' => ['required', 'string', 'max:255'],
             'site_logo_url' => ['nullable', 'string', 'max:2000'],
-            'site_logo_file' => ['nullable', 'file', 'max:2048', 'mimetypes:image/jpeg,image/png,image/webp,image/svg+xml'],
+            'site_logo_file' => ['nullable', 'file', 'mimetypes:image/jpeg,image/png,image/webp,image/svg+xml'],
             'site_logo_delete' => ['nullable', 'in:1'],
             'site_logo_url_previous' => ['nullable', 'string', 'max:2000'],
             'header_tagline' => ['required', 'string', 'max:500'],
@@ -307,6 +323,21 @@ class CmsPageController extends Controller
      */
     private function validatedPendaftaran(Request $request): array
     {
+        $cards = $request->input('cards', []);
+        if (is_array($cards)) {
+            foreach ($cards as $i => $card) {
+                if (! is_array($card)) {
+                    continue;
+                }
+                $cards[$i]['url'] = PublicCmsUrl::formatPendaftaranCardSlugForInput($card['url'] ?? '');
+            }
+            $request->merge(['cards' => $cards]);
+        }
+
+        AdminRepeatableFields::replaceInRequest($request, [
+            'cards' => AdminRepeatableFields::pruneTemplateRows($request->input('cards', []), ['title', 'url']),
+        ]);
+
         $validated = $request->validate(array_merge([
             'breadcrumb_home' => ['required', 'string', 'max:120'],
             'breadcrumb_current' => ['required', 'string', 'max:120'],
@@ -341,16 +372,28 @@ class CmsPageController extends Controller
         $validated['intro'] = '';
 
         $existing = CmsPageService::merged('pendaftaran');
+        $existingCards = is_array($existing['cards'] ?? null) ? $existing['cards'] : [];
+        $declaredRowCount = (int) $request->input('cards_row_count', 0);
+
+        $validated['cards'] = PendaftaranCardCms::finalizeCardsForSave(
+            $validated['cards'],
+            $existingCards,
+            $declaredRowCount
+        );
+
         $existingDetails = is_array($existing['card_details'] ?? null)
             ? $existing['card_details']
             : PendaftaranCardCms::defaultCardDetails();
-        $validated['card_details'] = PendaftaranCardCms::syncCardDetails($validated['cards'], $existingDetails);
-        $validated['page_icons'] = array_merge(
+
+        $payload = array_replace_recursive($existing, array_diff_key($validated, ['cards' => true, 'card_details' => true]));
+        $payload['cards'] = array_values($validated['cards']);
+        $payload['card_details'] = PendaftaranCardCms::syncCardDetails($validated['cards'], $existingDetails);
+        $payload['page_icons'] = array_merge(
             $existing['page_icons'] ?? [],
             $validated['page_icons'] ?? []
         );
 
-        return $validated;
+        return $payload;
     }
 
     /**
@@ -358,6 +401,10 @@ class CmsPageController extends Controller
      */
     private function validatedKontak(Request $request): array
     {
+        AdminRepeatableFields::replaceInRequest($request, [
+            'form_fields' => AdminRepeatableFields::pruneTemplateRows($request->input('form_fields', []), ['name']),
+        ]);
+
         $data = $request->validate(array_merge([
             'breadcrumb_home' => ['required', 'string', 'max:120'],
             'breadcrumb_current' => ['required', 'string', 'max:120'],

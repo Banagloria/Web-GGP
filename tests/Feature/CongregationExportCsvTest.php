@@ -26,7 +26,7 @@ class CongregationExportCsvTest extends TestCase
             'notes' => null,
         ]);
 
-        $response = $this->actingAs($admin)->get(route('dashboard.pendaftaran-jemaat.export-csv'));
+        $response = $this->actingAs($admin)->get(route('dashboard.pendaftaran.export-csv', 'jemaat'));
 
         $response->assertOk();
         $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
@@ -38,7 +38,7 @@ class CongregationExportCsvTest extends TestCase
     {
         $user = User::factory()->create(['role' => 'user']);
 
-        $response = $this->actingAs($user)->get(route('dashboard.pendaftaran-jemaat.export-csv'));
+        $response = $this->actingAs($user)->get(route('dashboard.pendaftaran.export-csv', 'jemaat'));
 
         $response->assertForbidden();
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Services\CmsPageService;
+use App\Services\WhatsAppNotificationDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -69,6 +70,14 @@ class ContactController extends Controller
             'message' => $messageVal,
             'extra' => $values,
         ]);
+
+        WhatsAppNotificationDispatcher::dispatch(
+            'kontak.submit',
+            WhatsAppNotificationDispatcher::replacementsFromFormData($values, [
+                'nama' => $nameVal,
+                'subjek' => isset($values['subject']) && is_string($values['subject']) ? $values['subject'] : '—',
+            ]),
+        );
 
         $msg = $cms['success_message'] ?? 'Pesan Anda telah terkirim. Tuhan memberkati.';
 

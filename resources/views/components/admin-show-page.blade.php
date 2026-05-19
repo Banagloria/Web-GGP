@@ -48,13 +48,13 @@
     </dl>
 
     @unless (isset($actions))
-        <div class="mt-5 flex flex-nowrap items-center justify-end gap-2 overflow-x-auto pb-1">
+        <div class="admin-page-actions">
             @include('admin.partials.btn', [
                 'href' => $backHref,
                 'variant' => 'secondary',
                 'icon' => 'fa-solid fa-xmark',
                 'label' => $backButtonLabel,
-                'extraClass' => 'shrink-0',
+                'extraClass' => 'shrink-0 whitespace-nowrap',
             ])
             @if ($editUrl)
                 @include('admin.partials.btn', [
@@ -62,15 +62,22 @@
                     'variant' => 'primary',
                     'icon' => 'fa-solid fa-pen',
                     'label' => $editLabel,
-                    'extraClass' => 'shrink-0',
+                    'extraClass' => 'shrink-0 whitespace-nowrap',
                 ])
             @endif
             @if ($deleteUrl)
-                @include('admin.partials.table-actions', [
-                    'deleteUrl' => $deleteUrl,
-                    'deleteTitle' => $deleteTitle,
-                    'deleteMessage' => $deleteMessage,
-                    'extraClass' => 'shrink-0',
+                @include('admin.partials.btn', [
+                    'formAction' => $deleteUrl,
+                    'method' => 'DELETE',
+                    'variant' => 'danger-solid',
+                    'icon' => 'fa-solid fa-trash',
+                    'label' => 'Hapus',
+                    'extraClass' => 'shrink-0 whitespace-nowrap',
+                    'confirmSubmit' => true,
+                    'confirmVariant' => 'delete',
+                    'confirmTitle' => $deleteTitle,
+                    'confirmMessage' => $deleteMessage,
+                    'confirmLabel' => 'Ya, hapus',
                 ])
             @endif
         </div>

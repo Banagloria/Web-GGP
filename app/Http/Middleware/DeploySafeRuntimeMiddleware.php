@@ -15,6 +15,7 @@ class DeploySafeRuntimeMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         DeploySafeRuntime::relaxDatabaseDriversIfNeeded();
+        DeploySafeRuntime::ensureUserPhoneColumnIfNeeded();
         DeploySafeRuntime::ensureBladeCompiledPathWritable();
 
         return $next($request);

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
+use App\Services\WhatsAppBroadcastCatalog;
+use App\Services\WhatsAppBroadcastDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -28,7 +30,12 @@ class AnnouncementAdminController extends Controller
         $data = $this->validated($request);
         $data['slug'] = $this->uniqueSlug($data['title']);
 
-        Announcement::query()->create($data);
+        $announcement = Announcement::query()->create($data);
+
+        WhatsAppBroadcastDispatcher::dispatch(
+            WhatsAppBroadcastCatalog::TRIGGER_PENGUMUMAN,
+            WhatsAppBroadcastCatalog::replacementsFromAnnouncement($announcement),
+        );
 
         return redirect()->route('dashboard.pengumuman.index')->with('status', 'Pengumuman ditambahkan.');
     }
@@ -66,6 +73,11 @@ class AnnouncementAdminController extends Controller
             'body' => ['nullable', 'string', 'max:50000'],
             'published_at' => ['nullable', 'date'],
             'is_published' => ['required', 'in:0,1'],
+        ], [], [
+            'title' => 'judul',
+            'body' => 'isi',
+            'published_at' => 'tanggal tayang',
+            'is_published' => 'status',
         ]);
         $data['is_published'] = (bool) (int) $data['is_published'];
 

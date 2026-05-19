@@ -18,6 +18,13 @@ class ContentPageController extends Controller
             ['n' => 6, 'key' => 'informasi_kegiatan', 'label' => 'Informasi kegiatan', 'path' => '/informasi-kegiatan'],
             ['n' => 7, 'key' => 'kontak', 'label' => 'Kontak', 'path' => '/kontak'],
             ['n' => 8, 'key' => 'galeri', 'label' => 'Galeri', 'path' => '/galeri'],
+            [
+                'n' => 9,
+                'key' => 'notifikasi_whatsapp',
+                'label' => 'Notifikasi WhatsApp',
+                'path' => '/notifikasi-whatsapp',
+                'route' => 'dashboard.setting.notifikasi-whatsapp.index',
+            ],
         ];
 
         return view('admin.pages.index', compact('entries'));
