@@ -14,7 +14,7 @@ class ExportDatabaseSeedCommand extends Command
 
     protected $description = 'Ekspor data aplikasi saat ini ke file seeder (backup via seed)';
 
-    /** @var list<string> Urutan insert; tabel runtime diabaikan. */
+    /** @var list<string> Urutan insert; tabel runtime (sessions, jobs, cache) diabaikan. */
     private const TABLES = [
         'users',
         'site_settings',
@@ -28,6 +28,12 @@ class ExportDatabaseSeedCommand extends Command
         'registration_submissions',
         'contacts',
         'gallery_items',
+        'whatsapp_waha_configs',
+        'whatsapp_message_templates',
+        'whatsapp_notification_recipients',
+        'whatsapp_notification_recipient_triggers',
+        'whatsapp_broadcast_templates',
+        'whatsapp_broadcast_template_users',
     ];
 
     public function handle(): int
@@ -108,6 +114,12 @@ class {$className} extends Seeder
 
     /** @var list<string> */
     private const TABLES = [
+        'whatsapp_broadcast_template_users',
+        'whatsapp_broadcast_templates',
+        'whatsapp_notification_recipient_triggers',
+        'whatsapp_notification_recipients',
+        'whatsapp_message_templates',
+        'whatsapp_waha_configs',
         'gallery_items',
         'contacts',
         'registration_submissions',

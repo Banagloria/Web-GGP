@@ -11,10 +11,6 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
-        // Backup data produksi (hasil: php artisan church:export-seed)
         $this->call(DatabaseBackupSeeder::class);
-
-        // Data demo/dummy — nonaktifkan baris di atas jika ingin pakai ini:
-        // $this->call(ChurchSeeder::class);
     }
 }
