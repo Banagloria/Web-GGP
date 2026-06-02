@@ -46,4 +46,17 @@ final class WhatsAppNotificationSupport
             return false;
         }
     }
+
+    public static function broadcastChatIdColumnReady(): bool
+    {
+        if (! self::broadcastRecipientColumnsReady()) {
+            return false;
+        }
+
+        try {
+            return Schema::hasColumn('whatsapp_broadcast_template_users', 'chat_id');
+        } catch (Throwable) {
+            return false;
+        }
+    }
 }

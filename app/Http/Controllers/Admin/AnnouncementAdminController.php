@@ -29,6 +29,8 @@ class AnnouncementAdminController extends Controller
     {
         $data = $this->validated($request);
         $data['slug'] = $this->uniqueSlug($data['title']);
+        $data['is_published'] = true;
+        $data['published_at'] = now();
 
         $announcement = Announcement::query()->create($data);
 
@@ -51,6 +53,10 @@ class AnnouncementAdminController extends Controller
         if ($announcement->title !== $data['title']) {
             $data['slug'] = $this->uniqueSlug($data['title'], $announcement->id);
         }
+        $data['is_published'] = true;
+        if ($announcement->published_at === null) {
+            $data['published_at'] = now();
+        }
         $announcement->update($data);
 
         return redirect()->route('dashboard.pengumuman.index')->with('status', 'Pengumuman diperbarui.');
@@ -68,20 +74,13 @@ class AnnouncementAdminController extends Controller
      */
     private function validated(Request $request): array
     {
-        $data = $request->validate([
+        return $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'body' => ['nullable', 'string', 'max:50000'],
-            'published_at' => ['nullable', 'date'],
-            'is_published' => ['required', 'in:0,1'],
         ], [], [
             'title' => 'judul',
             'body' => 'isi',
-            'published_at' => 'tanggal tayang',
-            'is_published' => 'status',
         ]);
-        $data['is_published'] = (bool) (int) $data['is_published'];
-
-        return $data;
     }
 
     private function uniqueSlug(string $title, ?int $ignoreId = null): string

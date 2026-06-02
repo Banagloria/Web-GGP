@@ -9,6 +9,8 @@
     $icon = $icon ?? null;
     $label = $label ?? '';
     $form = $form ?? null;
+    $target = $target ?? null;
+    $rel = $rel ?? null;
     $extraClass = $extraClass ?? '';
     $confirmSubmit = $confirmSubmit ?? false;
     $confirmVariant = $confirmVariant ?? 'delete';
@@ -65,7 +67,12 @@
         </button>
     </form>
 @elseif ($href)
-    <a href="{{ $href }}" class="{{ $btnClass }}">
+    <a
+        href="{{ $href }}"
+        class="{{ $btnClass }}"
+        @if ($target) target="{{ $target }}" @endif
+        @if ($rel) rel="{{ $rel }}" @endif
+    >
         @if ($icon)
             <i class="{{ $icon }}" aria-hidden="true"></i>
         @endif

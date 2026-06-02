@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('users', 'profile_photo_url')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
             $table->string('profile_photo_url', 2000)->nullable()->after('email');
         });

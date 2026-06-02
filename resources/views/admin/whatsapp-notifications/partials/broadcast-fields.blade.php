@@ -4,6 +4,7 @@
     $broadcastPlaceholderMap = $broadcastPlaceholderMap ?? [];
     $broadcastRecipientOptions = $broadcastRecipientOptions ?? [];
     $broadcast = $broadcast ?? null;
+    $fieldPrefix = $fieldPrefix ?? 'new';
     $selectedTrigger = old('trigger_key', $broadcast?->trigger_key);
     $selectedAudience = old('audience', $broadcast?->audience);
     $placeholderFields = $selectedTrigger ? ($broadcastPlaceholderMap[$selectedTrigger] ?? []) : [];
@@ -20,11 +21,21 @@
         }
     }
     $recipientGroups = collect($broadcastRecipientOptions)->groupBy('group');
+    $triggerFieldId = 'wa-broadcast-trigger-'.$fieldPrefix;
+    $audienceFieldId = 'wa-broadcast-audience-'.$fieldPrefix;
+    $recipientFieldId = 'wa-broadcast-recipient-'.$fieldPrefix;
+    $messageFieldId = 'wa-broadcast-message-'.$fieldPrefix;
 @endphp
 
 <div>
-    <x-admin-field-label for="wa-broadcast-trigger">Trigger</x-admin-field-label>
-    <select id="wa-broadcast-trigger" name="trigger_key" required class="admin-list-toolbar__select mt-1 w-full">
+    <x-admin-field-label :for="$triggerFieldId">Trigger</x-admin-field-label>
+    <select
+        id="{{ $triggerFieldId }}"
+        name="trigger_key"
+        required
+        class="admin-list-toolbar__select mt-1 w-full"
+        data-wa-broadcast-trigger
+    >
         <option value="">— Pilih trigger —</option>
         @foreach ($broadcastTriggerOptions as $option)
             <option value="{{ $option['key'] }}" @selected($selectedTrigger === $option['key'])>{{ $option['label'] }}</option>
@@ -33,8 +44,14 @@
 </div>
 
 <div class="mt-4">
-    <x-admin-field-label for="wa-broadcast-audience">Data penerima</x-admin-field-label>
-    <select id="wa-broadcast-audience" name="audience" required class="admin-list-toolbar__select mt-1 w-full">
+    <x-admin-field-label :for="$audienceFieldId">Data penerima</x-admin-field-label>
+    <select
+        id="{{ $audienceFieldId }}"
+        name="audience"
+        required
+        class="admin-list-toolbar__select mt-1 w-full"
+        data-wa-broadcast-audience
+    >
         <option value="">— Pilih data —</option>
         @foreach ($broadcastAudienceOptions as $option)
             <option value="{{ $option['key'] }}" @selected($selectedAudience === $option['key'])>{{ $option['label'] }}</option>
@@ -43,11 +60,17 @@
 </div>
 
 <div
-    id="wa-broadcast-users-wrap"
     class="mt-4 {{ $selectedAudience === 'one_by_one' ? '' : 'hidden' }}"
+    data-wa-broadcast-users-wrap
 >
-    <x-admin-field-label for="wa-broadcast-recipient">Pilih penerima (one by one)</x-admin-field-label>
-    <select id="wa-broadcast-recipient" name="recipient_key" class="admin-list-toolbar__select mt-1 w-full" @if($selectedAudience === 'one_by_one') required @endif>
+    <x-admin-field-label :for="$recipientFieldId">Pilih penerima (one by one)</x-admin-field-label>
+    <select
+        id="{{ $recipientFieldId }}"
+        name="recipient_key"
+        class="admin-list-toolbar__select mt-1 w-full"
+        data-wa-broadcast-recipient
+        @if ($selectedAudience === 'one_by_one') required @endif
+    >
         <option value="">— Pilih penerima —</option>
         @foreach ($recipientGroups as $group => $items)
             <optgroup label="{{ $group }}">
@@ -57,13 +80,13 @@
             </optgroup>
         @endforeach
     </select>
-    <p class="mt-2 text-xs text-slate-400">Semua akun (jemaat &amp; admin) serta data jemaat terdaftar yang memiliki nomor HP.</p>
+    <p class="mt-2 text-xs text-slate-400">Daftar per baris data <strong>Diterima</strong> (sama seperti tabel menu Data). Nomor diambil dari field tipe telepon atau isian 08… / 628….</p>
 </div>
 
 <div class="mt-4">
-    <x-admin-field-label for="wa-broadcast-message">Pesan WhatsApp</x-admin-field-label>
+    <x-admin-field-label :for="$messageFieldId">Pesan WhatsApp</x-admin-field-label>
     <textarea
-        id="wa-broadcast-message"
+        id="{{ $messageFieldId }}"
         name="message"
         rows="4"
         required

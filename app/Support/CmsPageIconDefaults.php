@@ -9,6 +9,8 @@ namespace App\Support;
  */
 final class CmsPageIconDefaults
 {
+    private const PENDAFTARAN_DYNAMIC_ICON_PATTERN = '/^form_[a-z0-9_]+_(leaf|h1|intro|submit)$/';
+
     /**
      * @return array<string, IconMeta>
      */
@@ -160,6 +162,58 @@ final class CmsPageIconDefaults
             );
         }
 
+        if ($pageKey === 'pendaftaran') {
+            foreach ($stored as $key => $value) {
+                if (! is_string($key) || isset($schema[$key])) {
+                    continue;
+                }
+                if (! self::isPendaftaranDynamicIconKey($key)) {
+                    continue;
+                }
+                $out[$key] = CmsIcon::toFontAwesome(
+                    trim((string) $value),
+                    self::pendaftaranDynamicIconDefault($key)
+                );
+            }
+        }
+
         return $out;
+    }
+
+    public static function pendaftaranDynamicIconMeta(string $iconKey): ?array
+    {
+        if (! self::isPendaftaranDynamicIconKey($iconKey)) {
+            return null;
+        }
+
+        return [
+            'label' => 'Form dinamis — ikon '.self::pendaftaranDynamicIconSuffixLabel($iconKey),
+            'default' => self::pendaftaranDynamicIconDefault($iconKey),
+        ];
+    }
+
+    private static function isPendaftaranDynamicIconKey(string $iconKey): bool
+    {
+        return (bool) preg_match(self::PENDAFTARAN_DYNAMIC_ICON_PATTERN, $iconKey);
+    }
+
+    private static function pendaftaranDynamicIconDefault(string $iconKey): string
+    {
+        return match (true) {
+            str_ends_with($iconKey, '_leaf') => 'fa-solid fa-user-plus',
+            str_ends_with($iconKey, '_h1') => 'fa-solid fa-file-signature',
+            str_ends_with($iconKey, '_submit') => 'fa-solid fa-paper-plane',
+            default => 'fa-solid fa-circle-info',
+        };
+    }
+
+    private static function pendaftaranDynamicIconSuffixLabel(string $iconKey): string
+    {
+        return match (true) {
+            str_ends_with($iconKey, '_leaf') => 'breadcrumb akhir',
+            str_ends_with($iconKey, '_h1') => 'judul halaman (H1)',
+            str_ends_with($iconKey, '_submit') => 'tombol kirim',
+            default => 'pengantar',
+        };
     }
 }

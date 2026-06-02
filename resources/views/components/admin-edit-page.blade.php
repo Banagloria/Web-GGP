@@ -21,6 +21,7 @@
     $cancelHref = $cancelHref ?? $backHref;
     $formId = $formId ?? 'admin-edit-form';
     $maxWidth = $wide ? 'max-w-full' : 'max-w-3xl sm:max-w-4xl';
+    $deleteFormId = $formId.'-delete';
 @endphp
 
 <div class="mx-auto w-full max-w-full {{ $maxWidth }} min-w-0 px-0">
@@ -98,8 +99,8 @@
                 ])
                 @if ($deleteUrl)
                     @include('admin.partials.btn', [
-                        'formAction' => $deleteUrl,
-                        'method' => 'DELETE',
+                        'type' => 'submit',
+                        'form' => $deleteFormId,
                         'variant' => 'danger-solid',
                         'icon' => 'fa-solid fa-trash',
                         'label' => 'Hapus',
@@ -116,6 +117,13 @@
             {{ $actions }}
         @endunless
     </form>
+
+    @if ($deleteUrl)
+        <form id="{{ $deleteFormId }}" method="post" action="{{ $deleteUrl }}" class="hidden">
+            @csrf
+            @method('DELETE')
+        </form>
+    @endif
 
     @if (isset($after))
         {{ $after }}

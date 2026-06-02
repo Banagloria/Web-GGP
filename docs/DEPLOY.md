@@ -18,7 +18,7 @@ Ringkasan langkah operasional untuk menjalankan aplikasi di server produksi.
 
 - Salin `.env.example` ke `.env` dan set:
   - `APP_ENV=production`, `APP_DEBUG=false`
-  - `APP_URL=https://domain-anda.tld` (HTTPS, tanpa slash akhir berlebihan)
+  - `APP_URL=https://ggpshalomtimika.my.id` (HTTPS, tanpa slash akhir berlebihan)
   - `DB_*` ke MySQL/PostgreSQL produksi bila tidak memakai SQLite.
   - `SESSION_DRIVER` dan `QUEUE_CONNECTION` sesuai kebutuhan (database disarankan untuk sesi multi-server).
 - `php artisan key:generate` sekali jika `APP_KEY` kosong.

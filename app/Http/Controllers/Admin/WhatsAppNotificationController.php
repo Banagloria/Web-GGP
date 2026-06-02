@@ -54,6 +54,16 @@ class WhatsAppNotificationController extends Controller
             ? $request->query('tab')
             : 'config';
 
+        if (old('_wa_test_template_id')) {
+            $activeTab = 'pesan';
+        }
+
+        $waConnection = null;
+        if ($activeTab === 'config') {
+            $waConnection = WahaApiService::make()->refreshConnectionStatus();
+            $config->refresh();
+        }
+
         $contactFormUserId = old('user_id');
         $contactFormTriggerKeys = old('trigger_keys', []);
         if ($contactFormUserId && $contactFormTriggerKeys === []) {
@@ -73,13 +83,18 @@ class WhatsAppNotificationController extends Controller
             ->all();
 
         $validationErrors = $request->session()->get('errors');
+        $editingBroadcastId = old('_wa_broadcast_form') === 'edit' ? (int) old('_wa_broadcast_id') : null;
         $showAddBroadcastPanel = old('_wa_broadcast_form') === 'add'
             || ($activeTab === 'broadcast'
+                && $editingBroadcastId === null
                 && $validationErrors !== null
                 && $validationErrors->hasAny(['trigger_key', 'audience', 'message', 'recipient_key', 'user_ids', 'whatsapp']));
 
+        $testMessageContacts = collect(WhatsAppBroadcastRecipientOptions::panelAccountEntries());
+
         return view('admin.whatsapp-notifications.index', compact(
             'config',
+            'waConnection',
             'templates',
             'triggerOptions',
             'triggerPlaceholders',
@@ -95,6 +110,8 @@ class WhatsAppNotificationController extends Controller
             'broadcastPlaceholderMap',
             'broadcastRecipientOptions',
             'showAddBroadcastPanel',
+            'editingBroadcastId',
+            'testMessageContacts',
         ));
     }
 
@@ -122,14 +139,31 @@ class WhatsAppNotificationController extends Controller
 
         $config->save();
 
-        $connection = WahaApiService::make()->refreshConnectionStatus();
+        $waha = WahaApiService::make();
+        $waha->ensureSessionRunning();
+        $connection = $waha->refreshConnectionStatus();
 
         $connected = (bool) $connection['connected'];
+        $apiOk = (bool) ($connection['api_ok'] ?? false);
+
+        if (! $apiOk) {
+            return redirect()
+                ->route('dashboard.setting.notifikasi-whatsapp.index', ['tab' => 'config'])
+                ->with('status', $connection['message'])
+                ->with('status_variant', 'error');
+        }
+
+        if ($connected) {
+            return redirect()
+                ->route('dashboard.setting.notifikasi-whatsapp.index', ['tab' => 'config'])
+                ->with('status', 'Berhasil terhubung ke WAHA.')
+                ->with('status_variant', 'success');
+        }
 
         return redirect()
             ->route('dashboard.setting.notifikasi-whatsapp.index', ['tab' => 'config'])
-            ->with('status', $connected ? 'Berhasil terhubung' : 'Gagal terhubung')
-            ->with('status_variant', $connected ? 'success' : 'error');
+            ->with('status', 'Konfigurasi disimpan. '.$connection['message'])
+            ->with('status_variant', 'success');
     }
 
     public function storeMessage(Request $request): RedirectResponse
@@ -178,22 +212,46 @@ class WhatsAppNotificationController extends Controller
             ->with('status', 'Kotak pesan dihapus.');
     }
 
-    public function testMessage(WhatsappMessageTemplate $template): RedirectResponse
+    public function testMessage(Request $request, WhatsappMessageTemplate $template): RedirectResponse
     {
         if ($redirect = $this->redirectIfTablesMissing()) {
             return $redirect;
         }
 
-        $recipients = WhatsappNotificationRecipient::query()->get();
-        if ($recipients->isEmpty()) {
-            return back()->withErrors(['whatsapp' => 'Belum ada kontak penerima. Atur di tab Kontak.']);
+        $validated = $request->validate([
+            'user_id' => ['required', 'integer', Rule::exists('users', 'id')],
+            '_wa_test_template_id' => ['nullable', 'integer'],
+        ], [], [
+            'user_id' => 'kontak',
+        ]);
+
+        $user = User::query()->panelUsers()->find($validated['user_id']);
+        if ($user === null) {
+            return redirect()
+                ->route('dashboard.setting.notifikasi-whatsapp.index', ['tab' => 'pesan'])
+                ->withInput()
+                ->withInput($request->only(['user_id', '_wa_test_template_id']))
+                ->withErrors(['user_id' => 'Akun tidak ditemukan di Manajemen akun.']);
+        }
+
+        $chatId = WhatsAppChatId::fromPhone($user->phone);
+        if ($chatId === null) {
+            return redirect()
+                ->route('dashboard.setting.notifikasi-whatsapp.index', ['tab' => 'pesan'])
+                ->withInput()
+                ->withInput($request->only(['user_id', '_wa_test_template_id']))
+                ->withErrors(['whatsapp' => 'Nomor HP akun tidak valid untuk WhatsApp (gunakan format 08xxx atau 628xxx).']);
         }
 
         try {
             $waha = WahaApiService::make();
             $status = $waha->refreshConnectionStatus();
             if (! $status['connected']) {
-                return back()->withErrors(['whatsapp' => 'WAHA belum terhubung. Periksa tab Config.']);
+                return redirect()
+                    ->route('dashboard.setting.notifikasi-whatsapp.index', ['tab' => 'pesan'])
+                    ->withInput()
+                    ->withInput($request->only(['user_id', '_wa_test_template_id']))
+                    ->withErrors(['whatsapp' => 'WAHA belum terhubung. Periksa tab Config.']);
             }
 
             $text = '[TEST] '.WhatsAppNotificationDispatcher::renderMessage(
@@ -201,13 +259,17 @@ class WhatsAppNotificationController extends Controller
                 WhatsAppTriggerCatalog::sampleReplacementsForTrigger($template->trigger_key),
             );
 
-            $waha->sendText($recipients->first()->chat_id, $text);
+            $waha->sendText($chatId, $text);
 
             return redirect()
                 ->route('dashboard.setting.notifikasi-whatsapp.index', ['tab' => 'pesan'])
-                ->with('status', 'Pesan uji terkirim ke kontak pertama.');
+                ->with('status', 'Pesan uji terkirim ke '.$user->name.'.');
         } catch (Throwable $e) {
-            return back()->withErrors(['whatsapp' => 'Gagal mengirim uji: '.$e->getMessage()]);
+            return redirect()
+                ->route('dashboard.setting.notifikasi-whatsapp.index', ['tab' => 'pesan'])
+                ->withInput()
+                ->withInput($request->only(['user_id', '_wa_test_template_id']))
+                ->withErrors(['whatsapp' => 'Gagal mengirim uji: '.$e->getMessage()]);
         }
     }
 
@@ -292,6 +354,27 @@ class WhatsAppNotificationController extends Controller
             ->with('status', 'Broadcast disimpan.');
     }
 
+    public function updateBroadcast(Request $request, WhatsappBroadcastTemplate $broadcast): RedirectResponse
+    {
+        if ($redirect = $this->redirectIfTablesMissing()) {
+            return $redirect;
+        }
+
+        $validated = $this->validatedBroadcast($request);
+
+        $broadcast->update([
+            'trigger_key' => $validated['trigger_key'],
+            'audience' => $validated['audience'],
+            'message' => $validated['message'],
+        ]);
+
+        $this->syncBroadcastRecipient($broadcast, $validated['audience'], $validated['recipient_key'] ?? null);
+
+        return redirect()
+            ->route('dashboard.setting.notifikasi-whatsapp.index', ['tab' => 'broadcast'])
+            ->with('status', 'Broadcast diperbarui.');
+    }
+
     public function destroyBroadcast(WhatsappBroadcastTemplate $broadcast): RedirectResponse
     {
         if ($redirect = $this->redirectIfTablesMissing()) {
@@ -347,7 +430,7 @@ class WhatsAppNotificationController extends Controller
     {
         $validated = $request->validate([
             'trigger_key' => ['required', 'string', 'max:120', Rule::in(array_column(WhatsAppBroadcastCatalog::triggerOptions(), 'key'))],
-            'audience' => ['required', 'string', 'max:40', Rule::in(array_column(WhatsAppBroadcastCatalog::audienceOptions(), 'key'))],
+            'audience' => ['required', 'string', 'max:120', Rule::in(WhatsAppBroadcastCatalog::audienceOptionKeys())],
             'message' => ['required', 'string', 'max:5000'],
             'recipient_key' => ['nullable', 'string', 'max:80'],
         ], [], [
@@ -391,6 +474,13 @@ class WhatsAppNotificationController extends Controller
             return;
         }
 
+        $chatId = $resolved['chat_id'] ?? null;
+        if ($chatId === null || $chatId === '') {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'recipient_key' => 'Nomor HP tidak valid untuk WhatsApp (gunakan format 08xxx atau 628xxx).',
+            ]);
+        }
+
         if ($resolved['user_id'] === null && ! WhatsAppNotificationSupport::broadcastRecipientColumnsReady()) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'recipient_key' => 'Penerima dari data jemaat memerlukan pembaruan database. Jalankan: php artisan migrate --force atau php artisan church:ensure-whatsapp-notification-tables',
@@ -404,6 +494,10 @@ class WhatsAppNotificationController extends Controller
             $payload['recipient_phone'] = $resolved['recipient_phone'];
         } elseif ($resolved['user_id'] !== null) {
             $payload['user_id'] = $resolved['user_id'];
+        }
+
+        if (WhatsAppNotificationSupport::broadcastChatIdColumnReady()) {
+            $payload['chat_id'] = $chatId;
         }
 
         WhatsappBroadcastTemplateUser::query()->create($payload);

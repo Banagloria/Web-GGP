@@ -4,6 +4,9 @@
     /** @var array<string, mixed> $data */
     $schema = \App\Support\CmsPageIconDefaults::schema($pageKey);
     $meta = $schema[$iconKey] ?? null;
+    if ($meta === null && $pageKey === 'pendaftaran') {
+        $meta = \App\Support\CmsPageIconDefaults::pendaftaranDynamicIconMeta($iconKey);
+    }
 @endphp
 @if ($meta !== null)
     @include('admin.partials.fa-icon-input', [

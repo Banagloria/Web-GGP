@@ -147,6 +147,7 @@ Route::middleware(['auth', 'admin'])->prefix('dashboard')->name('dashboard.')->g
         Route::match(['put', 'post'], 'setting/notifikasi-whatsapp/contacts', [WhatsAppNotificationController::class, 'updateContacts'])->name('setting.notifikasi-whatsapp.contacts');
         Route::match(['delete', 'post'], 'setting/notifikasi-whatsapp/contacts/{recipient}', [WhatsAppNotificationController::class, 'destroyContact'])->name('setting.notifikasi-whatsapp.contacts.destroy');
         Route::post('setting/notifikasi-whatsapp/broadcasts', [WhatsAppNotificationController::class, 'storeBroadcast'])->name('setting.notifikasi-whatsapp.broadcasts.store');
+        Route::match(['put', 'post'], 'setting/notifikasi-whatsapp/broadcasts/{broadcast}', [WhatsAppNotificationController::class, 'updateBroadcast'])->name('setting.notifikasi-whatsapp.broadcasts.update');
         Route::match(['delete', 'post'], 'setting/notifikasi-whatsapp/broadcasts/{broadcast}', [WhatsAppNotificationController::class, 'destroyBroadcast'])->name('setting.notifikasi-whatsapp.broadcasts.destroy');
         Route::get('setting/pendaftaran/kartu/{cardKey}/edit', [CmsPageController::class, 'editPendaftaranCard'])
             ->name('setting.pendaftaran.kartu.edit');

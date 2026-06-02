@@ -39,13 +39,22 @@
 
             {{-- Tab Config --}}
             <section class="wa-notif-panel {{ $activeTab === 'config' ? '' : 'hidden' }}" data-wa-panel="config" role="tabpanel">
+                @php
+                    $waSessionStatus = is_array($waConnection ?? null) ? strtoupper((string) ($waConnection['status'] ?? '')) : '';
+                    $waApiOk = is_array($waConnection ?? null) && ($waConnection['api_ok'] ?? false);
+                @endphp
                 <div class="mb-6 grid gap-4 rounded-lg border border-white/10 bg-church-surface/30 p-4 sm:grid-cols-2">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Status</p>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Status WhatsApp</p>
                         <p class="wa-waha-status {{ $config->is_connected ? 'wa-waha-status--connected' : 'wa-waha-status--disconnected' }}">
                             <i class="fa-solid fa-circle text-[0.5rem]" aria-hidden="true"></i>
                             {{ $config->is_connected ? 'Terhubung' : 'Tidak terhubung' }}
                         </p>
+                        @if ($waApiOk && $waSessionStatus === 'SCAN_QR_CODE')
+                            <p class="mt-2 text-sm text-church-gold">
+                                Buka <strong>Open Config</strong> di bawah, lalu scan QR di WhatsApp (Perangkat tertaut).
+                            </p>
+                        @endif
                     </div>
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Terakhir terhubung</p>
@@ -63,21 +72,26 @@
                         <input name="host" value="{{ old('host', $config->host) }}" required placeholder="https://waha.example.com" class="admin-list-toolbar__input mt-1 w-full">
                     </div>
                     <div>
-                        <x-admin-field-label>API Key</x-admin-field-label>
-                        <input
+                        <x-admin-field-label for="api_key">API Key</x-admin-field-label>
+                        <x-password-input
                             name="api_key"
-                            type="password"
-                            value="{{ old('api_key', $config->api_key) }}"
+                            id="api_key"
+                            :value="old('api_key', $config->api_key)"
                             autocomplete="new-password"
+                            toggle-variant="admin"
+                            wrapper-class="mt-1"
+                            input-class="admin-list-toolbar__input font-mono text-sm"
+                            :placeholder="filled(old('api_key', $config->api_key)) ? '' : 'API key WAHA'"
                             spellcheck="false"
-                            placeholder="{{ filled(old('api_key', $config->api_key)) ? '' : 'API key WAHA' }}"
-                            class="admin-list-toolbar__input mt-1 w-full font-mono text-sm"
-                        >
+                        />
                     </div>
                     <div>
                         <x-admin-field-label>Session</x-admin-field-label>
                         <input name="session" value="{{ old('session', $config->session ?: 'default') }}" required class="admin-list-toolbar__input mt-1 w-full">
                     </div>
+                    @php
+                        $wahaDashboardUrl = \App\Services\WahaApiService::make()->dashboardUrl();
+                    @endphp
                     <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                         @include('admin.partials.btn', [
                             'type' => 'submit',
@@ -85,6 +99,16 @@
                             'icon' => 'fa-solid fa-floppy-disk',
                             'label' => 'Simpan',
                             'size' => 'sm',
+                            'extraClass' => 'w-full sm:w-auto',
+                        ])
+                        @include('admin.partials.btn', [
+                            'href' => $wahaDashboardUrl,
+                            'variant' => 'secondary',
+                            'icon' => 'fa-solid fa-arrow-up-right-from-square',
+                            'label' => 'Open Config',
+                            'size' => 'sm',
+                            'target' => '_blank',
+                            'rel' => 'noopener noreferrer',
                             'extraClass' => 'w-full sm:w-auto',
                         ])
                     </div>
@@ -167,17 +191,16 @@
                                 </div>
                             </form>
                             <div class="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3 sm:flex-row sm:flex-wrap">
-                                <form method="post" action="{{ route('dashboard.setting.notifikasi-whatsapp.messages.test', $template) }}" class="inline w-full sm:w-auto">
-                                    @csrf
-                                    @include('admin.partials.btn', [
-                                        'type' => 'submit',
-                                        'variant' => 'secondary',
-                                        'icon' => 'fa-brands fa-whatsapp',
-                                        'label' => 'Test chat',
-                                        'size' => 'sm',
-                                        'extraClass' => 'w-full sm:w-auto',
-                                    ])
-                                </form>
+                                <button
+                                    type="button"
+                                    class="admin-btn admin-btn--secondary admin-btn--sm shrink-0 w-full sm:w-auto"
+                                    data-wa-test-open
+                                    data-template-id="{{ $template->id }}"
+                                    data-test-url="{{ route('dashboard.setting.notifikasi-whatsapp.messages.test', $template) }}"
+                                >
+                                    <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
+                                    Test pesan
+                                </button>
                                 <form method="post" action="{{ route('dashboard.setting.notifikasi-whatsapp.messages.destroy', $template) }}" class="inline w-full sm:w-auto">
                                     @csrf
                                     @method('DELETE')
@@ -201,6 +224,8 @@
                         <p class="rounded-lg border border-dashed border-white/15 px-4 py-8 text-center text-sm text-slate-400">Belum ada kotak pesan.</p>
                     @endforelse
                 </div>
+
+                @include('admin.whatsapp-notifications.partials.test-message-modal')
             </section>
 
             {{-- Tab Kontak --}}
@@ -359,7 +384,12 @@
                         data-wa-add-broadcast-panel
                         class="rounded-xl border border-white/10 bg-church-surface/25 p-4 sm:p-5 {{ ($showAddBroadcastPanel ?? false) ? '' : 'hidden' }}"
                     >
-                        <form method="post" action="{{ route('dashboard.setting.notifikasi-whatsapp.broadcasts.store') }}" class="space-y-4">
+                        <form
+                            method="post"
+                            action="{{ route('dashboard.setting.notifikasi-whatsapp.broadcasts.store') }}"
+                            class="space-y-4"
+                            data-wa-broadcast-form
+                        >
                             @csrf
                             <input type="hidden" name="_wa_broadcast_form" value="add">
                             @include('admin.whatsapp-notifications.partials.broadcast-fields', [
@@ -367,6 +397,7 @@
                                 'broadcastAudienceOptions' => $broadcastAudienceOptions,
                                 'broadcastPlaceholderMap' => $broadcastPlaceholderMap,
                                 'broadcastRecipientOptions' => $broadcastRecipientOptions,
+                                'fieldPrefix' => 'add',
                             ])
                             <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                                 @include('admin.partials.btn', [
@@ -402,6 +433,9 @@
                         </thead>
                         <tbody>
                             @forelse ($broadcasts as $broadcast)
+                                @php
+                                    $isEditingBroadcast = ($editingBroadcastId ?? null) === $broadcast->id;
+                                @endphp
                                 <tr class="border-t border-white/10 {{ $loop->even ? 'bg-admin-surface-zebra' : '' }}">
                                     <td class="px-4 py-3">{{ \App\Services\WhatsAppBroadcastCatalog::triggerLabel($broadcast->trigger_key) }}</td>
                                     <td class="px-4 py-3">
@@ -429,22 +463,73 @@
                                     </td>
                                     <td class="max-w-xs px-4 py-3 text-slate-300">{{ \Illuminate\Support\Str::limit($broadcast->message, 120) }}</td>
                                     <td class="px-4 py-3 text-right">
-                                        <form method="post" action="{{ route('dashboard.setting.notifikasi-whatsapp.broadcasts.destroy', $broadcast) }}" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            @include('admin.partials.btn', [
-                                                'type' => 'submit',
-                                                'variant' => 'danger',
+                                        <div class="admin-table-actions admin-table-actions--n3 ml-auto">
+                                            <button
+                                                type="button"
+                                                class="admin-btn-icon admin-btn-icon--gold wa-broadcast-edit-open"
+                                                data-broadcast-id="{{ $broadcast->id }}"
+                                                title="Edit"
+                                                aria-label="Edit"
+                                                aria-expanded="{{ $isEditingBroadcast ? 'true' : 'false' }}"
+                                            >
+                                                <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                                            </button>
+                                            @include('admin.partials.table-action-icon', [
+                                                'formAction' => route('dashboard.setting.notifikasi-whatsapp.broadcasts.destroy', $broadcast),
+                                                'method' => 'DELETE',
                                                 'icon' => 'fa-solid fa-trash',
                                                 'label' => 'Hapus',
-                                                'size' => 'sm',
-                                                'extraClass' => 'w-full sm:w-auto',
+                                                'variant' => 'delete',
                                                 'confirmSubmit' => true,
                                                 'confirmVariant' => 'delete',
                                                 'confirmTitle' => 'Hapus broadcast?',
                                                 'confirmMessage' => 'Konfigurasi broadcast ini akan dihapus.',
                                                 'confirmLabel' => 'Ya, hapus',
                                             ])
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr
+                                    class="border-t border-white/10 {{ $isEditingBroadcast ? '' : 'hidden' }}"
+                                    data-wa-edit-broadcast-panel="{{ $broadcast->id }}"
+                                >
+                                    <td colspan="4" class="bg-church-surface/30 px-4 py-4">
+                                        <form
+                                            method="post"
+                                            action="{{ route('dashboard.setting.notifikasi-whatsapp.broadcasts.update', $broadcast) }}"
+                                            class="space-y-4"
+                                            data-wa-broadcast-form
+                                        >
+                                            @csrf
+                                            @method('PUT')
+                                            <input type="hidden" name="_wa_broadcast_form" value="edit">
+                                            <input type="hidden" name="_wa_broadcast_id" value="{{ $broadcast->id }}">
+                                            @include('admin.whatsapp-notifications.partials.broadcast-fields', [
+                                                'broadcast' => $broadcast,
+                                                'broadcastTriggerOptions' => $broadcastTriggerOptions,
+                                                'broadcastAudienceOptions' => $broadcastAudienceOptions,
+                                                'broadcastPlaceholderMap' => $broadcastPlaceholderMap,
+                                                'broadcastRecipientOptions' => $broadcastRecipientOptions,
+                                                'fieldPrefix' => 'edit-'.$broadcast->id,
+                                            ])
+                                            <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                                                @include('admin.partials.btn', [
+                                                    'type' => 'submit',
+                                                    'variant' => 'primary',
+                                                    'icon' => 'fa-solid fa-floppy-disk',
+                                                    'label' => 'Simpan',
+                                                    'size' => 'sm',
+                                                    'extraClass' => 'w-full sm:w-auto',
+                                                ])
+                                                @include('admin.partials.btn', [
+                                                    'type' => 'button',
+                                                    'variant' => 'secondary',
+                                                    'icon' => 'fa-solid fa-xmark',
+                                                    'label' => 'Batal',
+                                                    'size' => 'sm',
+                                                    'extraClass' => 'w-full sm:w-auto wa-broadcast-edit-close',
+                                                ])
+                                            </div>
                                         </form>
                                     </td>
                                 </tr>
@@ -466,9 +551,71 @@
                 var triggerPlaceholders = @json($triggerPlaceholders);
                 var broadcastPlaceholderMap = @json($broadcastPlaceholderMap ?? []);
                 var recipientTriggerMap = @json($recipientTriggerMap ?? []);
+                var reopenTestTemplateId = @json(old('_wa_test_template_id'));
 
                 var root = document.querySelector('[data-wa-notif-tabs]');
                 if (!root) return;
+
+                var testMessageModal = document.getElementById('wa-test-message-modal');
+                var testMessageForm = document.getElementById('wa-test-message-form');
+
+                function setTestMessageModalOpen(open) {
+                    if (!testMessageModal) {
+                        return;
+                    }
+                    testMessageModal.classList.toggle('hidden', !open);
+                    testMessageModal.classList.toggle('flex', open);
+                    testMessageModal.setAttribute('aria-hidden', open ? 'false' : 'true');
+                    if (open) {
+                        var select = document.getElementById('wa-test-message-user');
+                        if (select) {
+                            select.focus();
+                        }
+                    }
+                }
+
+                function openTestMessageModal(btn) {
+                    if (!testMessageForm || !btn) {
+                        return;
+                    }
+                    var url = btn.getAttribute('data-test-url');
+                    if (!url) {
+                        return;
+                    }
+                    testMessageForm.setAttribute('action', url);
+                    var templateIdInput = document.getElementById('wa-test-template-id');
+                    if (templateIdInput) {
+                        templateIdInput.value = btn.getAttribute('data-template-id') || '';
+                    }
+                    setTestMessageModalOpen(true);
+                }
+
+                root.querySelectorAll('[data-wa-test-open]').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        openTestMessageModal(btn);
+                    });
+                });
+
+                document.querySelectorAll('[data-wa-test-message-cancel]').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        setTestMessageModalOpen(false);
+                    });
+                });
+
+                if (testMessageModal) {
+                    testMessageModal.addEventListener('keydown', function (event) {
+                        if (event.key === 'Escape') {
+                            setTestMessageModalOpen(false);
+                        }
+                    });
+                }
+
+                if (reopenTestTemplateId) {
+                    var reopenBtn = root.querySelector('[data-wa-test-open][data-template-id="' + reopenTestTemplateId + '"]');
+                    if (reopenBtn) {
+                        openTestMessageModal(reopenBtn);
+                    }
+                }
 
                 function formatPlaceholderHint(fields) {
                     if (!fields || !fields.length) {
@@ -624,30 +771,96 @@
                     hint.innerHTML = formatBroadcastPlaceholderHint(broadcastPlaceholderMap[select.value] || []);
                 }
 
-                var broadcastTriggerSelect = document.getElementById('wa-broadcast-trigger');
-                if (broadcastTriggerSelect) {
-                    broadcastTriggerSelect.addEventListener('change', function () {
-                        updateBroadcastPlaceholderHint(broadcastTriggerSelect);
-                    });
-                    updateBroadcastPlaceholderHint(broadcastTriggerSelect);
+                function initBroadcastForm(form) {
+                    if (!form || form.dataset.waBroadcastFormInit) {
+                        return;
+                    }
+                    form.dataset.waBroadcastFormInit = '1';
+
+                    var triggerSelect = form.querySelector('[data-wa-broadcast-trigger]');
+                    if (triggerSelect) {
+                        triggerSelect.addEventListener('change', function () {
+                            updateBroadcastPlaceholderHint(triggerSelect);
+                        });
+                        updateBroadcastPlaceholderHint(triggerSelect);
+                    }
+
+                    var audienceSelect = form.querySelector('[data-wa-broadcast-audience]');
+                    var usersWrap = form.querySelector('[data-wa-broadcast-users-wrap]');
+                    var recipientSelect = form.querySelector('[data-wa-broadcast-recipient]');
+                    if (audienceSelect && usersWrap) {
+                        var syncBroadcastRecipientField = function () {
+                            var isOneByOne = audienceSelect.value === 'one_by_one';
+                            usersWrap.classList.toggle('hidden', !isOneByOne);
+                            if (recipientSelect) {
+                                recipientSelect.required = isOneByOne;
+                            }
+                        };
+                        audienceSelect.addEventListener('change', syncBroadcastRecipientField);
+                        syncBroadcastRecipientField();
+                    }
                 }
 
-                var broadcastAudienceSelect = document.getElementById('wa-broadcast-audience');
-                var broadcastUsersWrap = document.getElementById('wa-broadcast-users-wrap');
-                var broadcastRecipientSelect = document.getElementById('wa-broadcast-recipient');
-                if (broadcastAudienceSelect && broadcastUsersWrap) {
-                    var syncBroadcastRecipientField = function () {
-                        var isOneByOne = broadcastAudienceSelect.value === 'one_by_one';
-                        broadcastUsersWrap.classList.toggle('hidden', !isOneByOne);
-                        if (broadcastRecipientSelect) {
-                            broadcastRecipientSelect.required = isOneByOne;
-                        }
-                    };
-                    broadcastAudienceSelect.addEventListener('change', syncBroadcastRecipientField);
-                    syncBroadcastRecipientField();
-                }
+                root.querySelectorAll('[data-wa-broadcast-form]').forEach(initBroadcastForm);
 
                 var addBroadcastRoot = root.querySelector('[data-wa-add-broadcast]');
+
+                function setBroadcastEditOpen(broadcastId, open) {
+                    root.querySelectorAll('[data-wa-edit-broadcast-panel]').forEach(function (panel) {
+                        var panelId = panel.getAttribute('data-wa-edit-broadcast-panel');
+                        var isTarget = panelId === String(broadcastId);
+                        panel.classList.toggle('hidden', !(open && isTarget));
+                    });
+                    root.querySelectorAll('.wa-broadcast-edit-open').forEach(function (btn) {
+                        var isTarget = btn.getAttribute('data-broadcast-id') === String(broadcastId);
+                        if (isTarget) {
+                            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                        } else if (open) {
+                            btn.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                }
+
+                root.querySelectorAll('.wa-broadcast-edit-open').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var broadcastId = btn.getAttribute('data-broadcast-id');
+                        if (!broadcastId) {
+                            return;
+                        }
+                        var panel = root.querySelector('[data-wa-edit-broadcast-panel="' + broadcastId + '"]');
+                        var willOpen = panel && panel.classList.contains('hidden');
+                        if (addBroadcastRoot) {
+                            var addBroadcastPanel = addBroadcastRoot.querySelector('[data-wa-add-broadcast-panel]');
+                            if (addBroadcastPanel) {
+                                addBroadcastPanel.classList.add('hidden');
+                            }
+                        }
+                        setBroadcastEditOpen(broadcastId, willOpen);
+                        if (willOpen && panel) {
+                            var form = panel.querySelector('[data-wa-broadcast-form]');
+                            if (form) {
+                                initBroadcastForm(form);
+                                var firstInput = form.querySelector('select, textarea, input:not([type="hidden"])');
+                                if (firstInput) {
+                                    firstInput.focus();
+                                }
+                            }
+                            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    });
+                });
+
+                root.querySelectorAll('.wa-broadcast-edit-close').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        var panel = btn.closest('[data-wa-edit-broadcast-panel]');
+                        if (!panel) {
+                            return;
+                        }
+                        var broadcastId = panel.getAttribute('data-wa-edit-broadcast-panel');
+                        setBroadcastEditOpen(broadcastId, false);
+                    });
+                });
+
                 if (addBroadcastRoot) {
                     var addBroadcastPanel = addBroadcastRoot.querySelector('[data-wa-add-broadcast-panel]');
                     var openBroadcastBtn = addBroadcastRoot.querySelector('.wa-add-broadcast-open');
@@ -659,6 +872,12 @@
                         }
                         addBroadcastPanel.classList.toggle('hidden', !open);
                         if (open) {
+                            root.querySelectorAll('[data-wa-edit-broadcast-panel]').forEach(function (panel) {
+                                panel.classList.add('hidden');
+                            });
+                            root.querySelectorAll('.wa-broadcast-edit-open').forEach(function (btn) {
+                                btn.setAttribute('aria-expanded', 'false');
+                            });
                             var firstInput = addBroadcastPanel.querySelector('select, textarea, input:not([type="hidden"])');
                             if (firstInput) {
                                 firstInput.focus();

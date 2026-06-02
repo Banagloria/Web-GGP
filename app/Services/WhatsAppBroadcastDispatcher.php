@@ -75,10 +75,34 @@ final class WhatsAppBroadcastDispatcher
     {
         $chatIds = [];
 
+        $dataSlug = WhatsAppBroadcastCatalog::audienceSlugFromKey((string) $template->audience);
+        if ($dataSlug !== null) {
+            foreach (WhatsAppBroadcastRecipientOptions::chatIdsForSlug($dataSlug) as $chatId) {
+                $chatIds[$chatId] = $chatId;
+            }
+
+            return array_values($chatIds);
+        }
+
+        if ($template->audience === WhatsAppBroadcastCatalog::AUDIENCE_PANEL_ACCOUNTS) {
+            foreach (WhatsAppBroadcastRecipientOptions::chatIdsForPanelAccounts() as $chatId) {
+                $chatIds[$chatId] = $chatId;
+            }
+
+            return array_values($chatIds);
+        }
+
+        if ($template->audience === WhatsAppBroadcastCatalog::AUDIENCE_ALL_ACCEPTED_DATA) {
+            foreach (WhatsAppBroadcastRecipientOptions::allAcceptedDataChatIds() as $chatId) {
+                $chatIds[$chatId] = $chatId;
+            }
+
+            return array_values($chatIds);
+        }
+
         if ($template->audience === WhatsAppBroadcastCatalog::AUDIENCE_ONE_BY_ONE) {
             foreach ($template->templateUsers()->with('user')->get() as $row) {
-                $phone = $row->user?->phone ?? $row->recipient_phone;
-                $chatId = WhatsAppChatId::fromPhone(is_string($phone) ? $phone : null);
+                $chatId = self::chatIdForTemplateUserRow($row);
                 if ($chatId !== null && $chatId !== '') {
                     $chatIds[$chatId] = $chatId;
                 }
@@ -95,6 +119,17 @@ final class WhatsAppBroadcastDispatcher
         }
 
         return array_values($chatIds);
+    }
+
+    private static function chatIdForTemplateUserRow(\App\Models\WhatsappBroadcastTemplateUser $row): ?string
+    {
+        if (filled($row->chat_id)) {
+            return (string) $row->chat_id;
+        }
+
+        $phone = $row->user?->phone ?? $row->recipient_phone;
+
+        return WhatsAppChatId::fromPhone(is_string($phone) ? $phone : null);
     }
 
     /**

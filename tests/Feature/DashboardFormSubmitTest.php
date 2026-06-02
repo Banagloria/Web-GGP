@@ -80,12 +80,13 @@ class DashboardFormSubmitTest extends TestCase
         $mainForm = substr($html, $formOpen, $formClose - $formOpen);
 
         $this->assertStringContainsString('name="title"', $mainForm);
-        $this->assertStringContainsString('name="is_published"', $mainForm);
+        $this->assertStringNotContainsString('name="is_published"', $mainForm);
+        $this->assertStringNotContainsString('name="published_at"', $mainForm);
         $this->assertStringContainsString('type="submit"', $mainForm);
         $this->assertStringNotContainsString('<form', substr($mainForm, 5));
     }
 
-    public function test_simpan_pengumuman_dengan_judul_dan_status(): void
+    public function test_simpan_pengumuman_dengan_judul_otomatis_publish(): void
     {
         $admin = User::factory()->admin()->create();
 
@@ -93,7 +94,6 @@ class DashboardFormSubmitTest extends TestCase
             ->post(route('dashboard.pengumuman.store'), [
                 'title' => 'Pengumuman uji',
                 'body' => 'Isi lengkap',
-                'is_published' => '1',
             ])
             ->assertRedirect(route('dashboard.pengumuman.index'))
             ->assertSessionHas('status');

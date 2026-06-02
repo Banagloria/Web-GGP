@@ -18,7 +18,6 @@
             <thead><tr class="bg-church-navy-mid text-white text-left">
                 <th class="px-3 py-2">Judul</th>
                 <th class="px-3 py-2">Tayang</th>
-                <th class="px-3 py-2">Status</th>
                 <th class="px-3 py-2 w-32">Aksi</th>
             </tr></thead>
             <tbody>
@@ -26,7 +25,6 @@
                     <tr class="border-t border-white/10 {{ $loop->even ? 'bg-admin-surface-zebra' : '' }}">
                         <td class="px-3 py-2 font-medium">{{ $row->title }}</td>
                         <td class="px-3 py-2">{{ $row->published_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</td>
-                        <td class="px-3 py-2">{{ $row->is_published ? 'Publish' : 'Draft' }}</td>
                         <td class="px-3 py-2">
                             @include('admin.partials.table-actions', [
                                 'editUrl' => route('dashboard.pengumuman.edit', $row),

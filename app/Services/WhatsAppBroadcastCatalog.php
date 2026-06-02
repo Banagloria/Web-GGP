@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Announcement;
 use App\Models\GalleryItem;
+use App\Models\User;
 use App\Models\WorshipSchedule;
 use Illuminate\Support\Facades\Storage;
 
@@ -15,13 +16,24 @@ final class WhatsAppBroadcastCatalog
 
     public const TRIGGER_GALERI = 'galeri.create';
 
+    public const AUDIENCE_ONE_BY_ONE = 'one_by_one';
+
+    public const AUDIENCE_DATA_PREFIX = 'data:';
+
+    /** Semua pengurus di menu Manajemen akun (admin / super admin) yang punya nomor HP. */
+    public const AUDIENCE_PANEL_ACCOUNTS = 'accounts:panel';
+
+    /** @deprecated Disimpan di database lama — tetap didukung saat kirim */
     public const AUDIENCE_ALL_MEMBERS = 'all_members';
 
+    /** @deprecated */
     public const AUDIENCE_ALL_ADMINS = 'all_admins';
 
+    /** @deprecated */
     public const AUDIENCE_ALL_MEMBERS_AND_ADMINS = 'all_members_and_admins';
 
-    public const AUDIENCE_ONE_BY_ONE = 'one_by_one';
+    /** @deprecated */
+    public const AUDIENCE_ALL_ACCEPTED_DATA = 'all_accepted_data';
 
     /**
      * @return list<array{key: string, label: string}>
@@ -36,16 +48,79 @@ final class WhatsAppBroadcastCatalog
     }
 
     /**
+     * Opsi dari nama kartu menu Data (hanya form yang punya field tipe telepon).
+     *
      * @return list<array{key: string, label: string}>
      */
     public static function audienceOptions(): array
     {
-        return [
-            ['key' => self::AUDIENCE_ALL_MEMBERS, 'label' => 'Semua jemaat'],
-            ['key' => self::AUDIENCE_ALL_ADMINS, 'label' => 'Semua admin'],
-            ['key' => self::AUDIENCE_ALL_MEMBERS_AND_ADMINS, 'label' => 'Semua jemaat dan admin'],
-            ['key' => self::AUDIENCE_ONE_BY_ONE, 'label' => 'One by one'],
+        $options = [];
+
+        try {
+            $cms = CmsPageService::merged('pendaftaran');
+        } catch (\Throwable) {
+            $cms = ['cards' => []];
+        }
+
+        foreach (WhatsAppBroadcastRecipientOptions::slugTitlesFromCms() as $slug => $title) {
+            if (! WhatsAppBroadcastRecipientOptions::slugHasPhoneField($slug, $cms)) {
+                continue;
+            }
+
+            $count = count(WhatsAppBroadcastRecipientOptions::acceptedDataEntriesForSlug($slug, $cms, $title));
+            $label = $title;
+            if ($count > 0) {
+                $label .= ' ('.$count.' nomor HP)';
+            }
+
+            $options[] = [
+                'key' => self::audienceDataKey($slug),
+                'label' => $label,
+            ];
+        }
+
+        if (User::phoneColumnReady()) {
+            $panelCount = count(WhatsAppBroadcastRecipientOptions::chatIdsForPanelAccounts());
+            $panelLabel = 'Manajemen akun';
+            if ($panelCount > 0) {
+                $panelLabel .= ' ('.$panelCount.' nomor HP)';
+            }
+            $options[] = [
+                'key' => self::AUDIENCE_PANEL_ACCOUNTS,
+                'label' => $panelLabel,
+            ];
+        }
+
+        $options[] = [
+            'key' => self::AUDIENCE_ONE_BY_ONE,
+            'label' => 'Pilih satu per satu',
         ];
+
+        return $options;
+    }
+
+    public static function audienceDataKey(string $slug): string
+    {
+        return self::AUDIENCE_DATA_PREFIX.$slug;
+    }
+
+    public static function audienceSlugFromKey(string $audience): ?string
+    {
+        if (! str_starts_with($audience, self::AUDIENCE_DATA_PREFIX)) {
+            return null;
+        }
+
+        $slug = substr($audience, strlen(self::AUDIENCE_DATA_PREFIX));
+
+        return $slug !== '' ? $slug : null;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function audienceOptionKeys(): array
+    {
+        return array_column(self::audienceOptions(), 'key');
     }
 
     public static function isValidTrigger(string $key): bool
@@ -55,7 +130,16 @@ final class WhatsAppBroadcastCatalog
 
     public static function isValidAudience(string $key): bool
     {
-        return in_array($key, array_column(self::audienceOptions(), 'key'), true);
+        if (in_array($key, self::audienceOptionKeys(), true)) {
+            return true;
+        }
+
+        return in_array($key, [
+            self::AUDIENCE_ALL_MEMBERS,
+            self::AUDIENCE_ALL_ADMINS,
+            self::AUDIENCE_ALL_MEMBERS_AND_ADMINS,
+            self::AUDIENCE_ALL_ACCEPTED_DATA,
+        ], true);
     }
 
     public static function triggerLabel(string $key): string
@@ -77,7 +161,22 @@ final class WhatsAppBroadcastCatalog
             }
         }
 
-        return $key;
+        $slug = self::audienceSlugFromKey($key);
+        if ($slug !== null) {
+            $titles = WhatsAppBroadcastRecipientOptions::slugTitlesFromCms();
+
+            return $titles[$slug] ?? $slug;
+        }
+
+        return match ($key) {
+            self::AUDIENCE_PANEL_ACCOUNTS => 'Manajemen akun',
+            self::AUDIENCE_ALL_MEMBERS => 'Semua jemaat',
+            self::AUDIENCE_ALL_ADMINS => 'Semua admin',
+            self::AUDIENCE_ALL_MEMBERS_AND_ADMINS => 'Semua jemaat dan admin',
+            self::AUDIENCE_ALL_ACCEPTED_DATA => 'Semua data diterima',
+            self::AUDIENCE_ONE_BY_ONE => 'Pilih satu per satu',
+            default => $key,
+        };
     }
 
     /**

@@ -356,7 +356,7 @@ class RegistrationSubmissionService
         $name = strtolower((string) ($column['name'] ?? ''));
         $label = strtolower((string) ($column['label'] ?? ''));
 
-        foreach (['phone', 'telepon', 'whatsapp', 'hp', 'nomor', 'no_telp', 'no_hp'] as $needle) {
+        foreach (['phone', 'telepon', 'telpon', 'whatsapp', 'wa', 'hp', 'nomor', 'no_telp', 'no_hp'] as $needle) {
             if (str_contains($name, $needle) || str_contains($label, $needle)) {
                 return true;
             }
@@ -388,25 +388,62 @@ class RegistrationSubmissionService
     }
 
     /**
+     * Field telepon dari pengaturan form (tipe tel/phone — tidak bergantung label/name).
+     *
+     * @param  array{name: string, label: string, type?: string}  $column
+     */
+    public static function isPhoneFieldType(array $column): bool
+    {
+        $type = strtolower((string) ($column['type'] ?? ''));
+
+        return in_array($type, ['tel', 'phone', 'telepon'], true);
+    }
+
+    /**
+     * Deteksi nomor HP Indonesia dari isi input (08…, 628…, +62…) — untuk form dinamis.
+     */
+    public static function valueLooksLikePhone(string $value): bool
+    {
+        $trimmed = trim($value);
+        if ($trimmed === '' || str_contains($trimmed, '@')) {
+            return false;
+        }
+
+        if (preg_match('/[a-zA-Z]/', $trimmed) === 1 && ! preg_match('/^\+?[\d\s().\-]+$/', $trimmed)) {
+            return false;
+        }
+
+        $normalized = self::normalizePhoneText($trimmed);
+        $digits = preg_replace('/\D+/', '', $normalized) ?? '';
+
+        return preg_match('/^628\d{8,11}$/', $digits) === 1;
+    }
+
+    /**
      * @param  list<array{name: string, label: string, type?: string}>  $columns
      */
     public static function phoneFromSubmission(RegistrationSubmission $submission, array $columns = []): ?string
     {
         foreach ($columns as $column) {
-            if (! self::isTextExportColumn($column)) {
+            if (! self::isPhoneFieldType($column)) {
                 continue;
             }
-            $value = self::displayCellValue($submission, $column);
-            if ($value === '') {
-                continue;
-            }
-            $normalized = self::normalizePhoneText($value);
-            if (preg_match('/\d{9,}/', $normalized) === 1) {
-                return $normalized;
+            $phone = self::normalizedPhoneFromValue(self::displayCellValue($submission, $column));
+            if ($phone !== null) {
+                return $phone;
             }
         }
 
-        return self::phoneFromPayload($submission->payload ?? []);
+        foreach ($columns as $column) {
+            $phone = self::normalizedPhoneFromValue(self::displayCellValue($submission, $column));
+            if ($phone !== null) {
+                return $phone;
+            }
+        }
+
+        $payload = is_array($submission->payload) ? $submission->payload : [];
+
+        return self::phoneFromPayload($payload) ?? self::phoneFromPayloadByValue($payload);
     }
 
     /**
@@ -415,22 +452,70 @@ class RegistrationSubmissionService
     public static function phoneFromPayload(array $payload): ?string
     {
         foreach ($payload as $key => $value) {
-            if (! is_string($value) || trim($value) === '') {
+            $value = self::scalarPayloadValue($value);
+            if ($value === null) {
                 continue;
             }
             $keyLower = strtolower((string) $key);
-            foreach (['phone', 'telepon', 'whatsapp', 'hp', 'nomor', 'no_telp', 'no_hp'] as $needle) {
+            foreach (['phone', 'telepon', 'telpon', 'whatsapp', 'wa', 'hp', 'nomor', 'no_telp', 'no_hp'] as $needle) {
                 if (! str_contains($keyLower, $needle)) {
                     continue;
                 }
-                $normalized = self::normalizePhoneText(trim($value));
-                if (preg_match('/\d{9,}/', $normalized) === 1) {
-                    return $normalized;
+                $phone = self::normalizedPhoneFromValue(trim($value));
+                if ($phone !== null) {
+                    return $phone;
                 }
             }
         }
 
         return null;
+    }
+
+    /**
+     * Scan semua nilai payload — cocok untuk field dinamis tanpa nama/label khusus.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public static function phoneFromPayloadByValue(array $payload): ?string
+    {
+        foreach ($payload as $value) {
+            $value = self::scalarPayloadValue($value);
+            if ($value === null) {
+                continue;
+            }
+            $phone = self::normalizedPhoneFromValue($value);
+            if ($phone !== null) {
+                return $phone;
+            }
+        }
+
+        return null;
+    }
+
+    private static function normalizedPhoneFromValue(string $value): ?string
+    {
+        if ($value === '' || ! self::valueLooksLikePhone($value)) {
+            return null;
+        }
+
+        $normalized = self::normalizePhoneText($value);
+        $digits = preg_replace('/\D+/', '', $normalized) ?? '';
+
+        return preg_match('/^628\d{8,11}$/', $digits) === 1 ? $normalized : null;
+    }
+
+    private static function scalarPayloadValue(mixed $value): ?string
+    {
+        if (is_int($value) || is_float($value)) {
+            $value = (string) (int) $value;
+        }
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        return $trimmed === '' ? null : $trimmed;
     }
 
     public static function displayPhone(?string $phone): string

@@ -58,7 +58,7 @@ class AppServiceProvider extends ServiceProvider
 
         $layoutDefaults = [
             'churchPhone' => '081240311377',
-            'churchEmail' => 'admin@gereja-timika.org',
+            'churchEmail' => 'admin@ggpshalomtimika.my.id',
             'churchAddress' => 'Jalan Kelimutu, Timika, Papua',
             'churchNameLine1' => 'GEREJA GERAKAN PANTEKOSTA',
             'churchNameLine2' => 'Syalom Timika',

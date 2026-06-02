@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Services\CmsPageService;
+use App\Support\PendaftaranCardCms;
 use App\Support\PublicCmsUrl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -170,5 +171,55 @@ class CmsPendaftaranCardTest extends TestCase
             ])
             ->assertRedirect(route('dashboard.setting.cms.edit', 'pendaftaran'))
             ->assertSessionHasErrors('cards.3.cta_label');
+    }
+
+    public function test_simpan_field_pilihan_menyimpan_semua_opsi(): void
+    {
+        $superAdmin = User::factory()->superAdmin()->create();
+        $defaults = PendaftaranCardCms::defaultFormDetail('jemaat');
+
+        $payload = array_merge($defaults, [
+            'sections' => [
+                [
+                    'key' => 'custom',
+                    'icon' => 'fa-solid fa-list',
+                    'title' => 'Data tambahan',
+                    'subtitle' => '',
+                    'fields' => [
+                        [
+                            'name' => 'Jenis_Kelamin',
+                            'label' => 'Jenis Kelamin',
+                            'icon' => 'fa-solid fa-venus-mars',
+                            'type' => 'select',
+                            'width' => 'full',
+                            'placeholder' => 'Jenis Kelamin',
+                            'required' => '1',
+                            'select_options' => [
+                                ['value' => 'Laki - Laki', 'label' => 'Laki - Laki'],
+                                ['value' => 'Perempuan', 'label' => 'Perempuan'],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->put(route('dashboard.setting.pendaftaran.kartu.update', 'jemaat'), $payload)
+            ->assertRedirect(route('dashboard.setting.pendaftaran.kartu.edit', 'jemaat'))
+            ->assertSessionHas('status');
+
+        $saved = PendaftaranCardCms::detailFromCms(CmsPageService::merged('pendaftaran'), 'jemaat');
+        $fields = $saved['sections'][0]['fields'] ?? [];
+        $genderField = collect($fields)->firstWhere('name', 'Jenis_Kelamin');
+
+        $this->assertIsArray($genderField);
+        $this->assertSame(
+            [
+                ['value' => 'Laki - Laki', 'label' => 'Laki - Laki'],
+                ['value' => 'Perempuan', 'label' => 'Perempuan'],
+            ],
+            $genderField['select_options'] ?? []
+        );
     }
 }

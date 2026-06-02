@@ -12,6 +12,7 @@ class WhatsappBroadcastTemplateUser extends Model
         'user_id',
         'recipient_name',
         'recipient_phone',
+        'chat_id',
     ];
 
     public function template(): BelongsTo

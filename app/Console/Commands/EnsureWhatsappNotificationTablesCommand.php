@@ -88,6 +88,7 @@ class EnsureWhatsappNotificationTablesCommand extends Command
                     $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
                     $table->string('recipient_name', 200)->nullable();
                     $table->string('recipient_phone', 32)->nullable();
+                    $table->string('chat_id', 64)->nullable();
                     $table->timestamps();
 
                     $table->unique(['broadcast_template_id', 'user_id'], 'wa_broadcast_user_unique');
@@ -100,6 +101,9 @@ class EnsureWhatsappNotificationTablesCommand extends Command
                     }
                     if (! Schema::hasColumn('whatsapp_broadcast_template_users', 'recipient_phone')) {
                         $table->string('recipient_phone', 32)->nullable()->after('recipient_name');
+                    }
+                    if (! Schema::hasColumn('whatsapp_broadcast_template_users', 'chat_id')) {
+                        $table->string('chat_id', 64)->nullable()->after('recipient_phone');
                     }
                 });
 

@@ -11,7 +11,7 @@ class AnnouncementFormSubmitTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_simpan_pengumuman_baru_mengirim_judul_dan_status(): void
+    public function test_simpan_pengumuman_baru_otomatis_publish(): void
     {
         $admin = User::factory()->admin()->create();
 
@@ -19,14 +19,13 @@ class AnnouncementFormSubmitTest extends TestCase
             ->post(route('dashboard.pengumuman.store'), [
                 'title' => 'Pengumuman Minggu',
                 'body' => 'Isi pengumuman.',
-                'is_published' => '0',
             ])
             ->assertRedirect(route('dashboard.pengumuman.index'))
             ->assertSessionHas('status');
 
         $this->assertDatabaseHas('announcements', [
             'title' => 'Pengumuman Minggu',
-            'is_published' => false,
+            'is_published' => true,
         ]);
     }
 
@@ -46,7 +45,6 @@ class AnnouncementFormSubmitTest extends TestCase
                 '_method' => 'PUT',
                 'title' => 'Judul diperbarui',
                 'body' => 'Isi baru',
-                'is_published' => '1',
             ])
             ->assertRedirect(route('dashboard.pengumuman.index'))
             ->assertSessionHas('status');
@@ -54,5 +52,6 @@ class AnnouncementFormSubmitTest extends TestCase
         $item->refresh();
         $this->assertSame('Judul diperbarui', $item->title);
         $this->assertTrue($item->is_published);
+        $this->assertNotNull($item->published_at);
     }
 }

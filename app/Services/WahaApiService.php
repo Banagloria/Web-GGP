@@ -19,54 +19,90 @@ final class WahaApiService
     }
 
     /**
-     * @return array{connected: bool, status: string, message: string, checked_at: \Illuminate\Support\Carbon}
+     * @return array{connected: bool, api_ok: bool, status: string, message: string, checked_at: \Illuminate\Support\Carbon}
      */
     public function refreshConnectionStatus(): array
     {
-        $host = trim((string) $this->config->host);
-        $session = trim((string) ($this->config->session ?: 'default'));
-
-        if ($host === '') {
-            return $this->storeStatus(false, 'STOPPED', 'Host WAHA belum diisi.');
-        }
+        $session = $this->sessionName();
 
         try {
-            $response = Http::timeout(12)
-                ->withHeaders($this->headers())
-                ->get($this->apiBase($host).'/sessions/'.$session);
+            $response = $this->http()->get($this->apiBase().'/sessions/'.$session);
+
+            if ($response->status() === 401 || $response->status() === 403) {
+                return $this->storeStatus(false, false, 'ERROR', 'API key WAHA tidak valid (HTTP '.$response->status().').');
+            }
 
             if (! $response->successful()) {
-                return $this->storeStatus(false, 'ERROR', 'Gagal memeriksa sesi: HTTP '.$response->status());
+                return $this->storeStatus(false, false, 'ERROR', 'Gagal memeriksa sesi: HTTP '.$response->status().'.');
             }
 
             $payload = $response->json();
             $status = strtoupper((string) (is_array($payload) ? ($payload['status'] ?? 'UNKNOWN') : 'UNKNOWN'));
             $connected = $status === 'WORKING';
 
-            return $this->storeStatus(
-                $connected,
-                $status,
-                $connected ? 'Terhubung ke WAHA.' : 'Status sesi: '.$status,
-            );
+            $message = match ($status) {
+                'WORKING' => 'Terhubung ke WAHA.',
+                'SCAN_QR_CODE' => 'API WAHA OK. Scan QR WhatsApp di dashboard WAHA untuk mengaktifkan sesi.',
+                'STARTING' => 'API WAHA OK. Sesi sedang dimulai…',
+                'FAILED', 'STOPPED' => 'API WAHA OK. Sesi WhatsApp tidak aktif ('.$status.'). Buka dashboard WAHA dan scan QR.',
+                default => 'API WAHA OK. Status sesi: '.$status,
+            };
+
+            return $this->storeStatus($connected, true, $status, $message);
         } catch (Throwable $e) {
-            return $this->storeStatus(false, 'ERROR', 'Tidak dapat terhubung ke WAHA: '.$e->getMessage());
+            return $this->storeStatus(false, false, 'ERROR', 'Tidak dapat terhubung ke WAHA: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Mulai ulang sesi jika berhenti atau gagal.
+     */
+    public function ensureSessionRunning(): void
+    {
+        $session = $this->sessionName();
+
+        try {
+            $response = $this->http()->get($this->apiBase().'/sessions/'.$session);
+
+            if (! $response->successful()) {
+                $this->http()->post($this->apiBase().'/sessions', [
+                    'name' => $session,
+                    'start' => true,
+                ]);
+
+                return;
+            }
+
+            $status = strtoupper((string) ($response->json('status') ?? ''));
+
+            if (in_array($status, ['FAILED', 'STOPPED'], true)) {
+                $this->http()->post($this->apiBase().'/sessions/'.$session.'/restart');
+
+                return;
+            }
+
+            if ($status === 'SCAN_QR_CODE') {
+                return;
+            }
+
+            if (! in_array($status, ['WORKING', 'STARTING'], true)) {
+                $this->http()->post($this->apiBase().'/sessions/'.$session.'/start');
+            }
+        } catch (Throwable) {
+            // refreshConnectionStatus akan memberi pesan error ke admin.
         }
     }
 
     public function sendText(string $chatId, string $text): void
     {
-        $host = trim((string) $this->config->host);
-        $session = trim((string) ($this->config->session ?: 'default'));
-        $apiKey = (string) ($this->config->api_key ?? '');
-
-        if ($host === '') {
+        if (trim($this->resolveApiHost()) === '') {
             throw new \RuntimeException('Host WAHA belum dikonfigurasi.');
         }
 
-        $response = Http::timeout(20)
-            ->withHeaders($this->headers())
-            ->post($this->apiBase($host).'/sendText', [
-                'session' => $session,
+        $response = $this->http()
+            ->timeout(20)
+            ->post($this->apiBase().'/sendText', [
+                'session' => $this->sessionName(),
                 'chatId' => $chatId,
                 'text' => $text,
             ]);
@@ -76,10 +112,22 @@ final class WahaApiService
         }
     }
 
+    public function dashboardUrl(): string
+    {
+        $public = trim((string) ($this->config->host ?: config('waha.internal_url')));
+
+        return rtrim($public, '/').'/dashboard/';
+    }
+
+    public function qrImageUrl(): string
+    {
+        return $this->apiBase().'/'.$this->sessionName().'/auth/qr?format=image';
+    }
+
     /**
-     * @return array{connected: bool, status: string, message: string, checked_at: \Illuminate\Support\Carbon}
+     * @return array{connected: bool, api_ok: bool, status: string, message: string, checked_at: \Illuminate\Support\Carbon}
      */
-    private function storeStatus(bool $connected, string $status, string $message): array
+    private function storeStatus(bool $connected, bool $apiOk, string $status, string $message): array
     {
         $this->config->forceFill([
             'is_connected' => $connected,
@@ -88,15 +136,37 @@ final class WahaApiService
 
         return [
             'connected' => $connected,
+            'api_ok' => $apiOk,
             'status' => $status,
             'message' => $message,
             'checked_at' => now(),
         ];
     }
 
-    private function apiBase(string $host): string
+    private function apiBase(): string
     {
-        return rtrim($host, '/').'/api';
+        return rtrim($this->resolveApiHost(), '/').'/api';
+    }
+
+    private function resolveApiHost(): string
+    {
+        $internal = trim((string) config('waha.internal_url', ''));
+
+        if ($internal !== '') {
+            return rtrim($internal, '/');
+        }
+
+        return rtrim(trim((string) $this->config->host), '/');
+    }
+
+    private function sessionName(): string
+    {
+        return trim((string) ($this->config->session ?: 'default'));
+    }
+
+    private function http(): \Illuminate\Http\Client\PendingRequest
+    {
+        return Http::timeout(12)->withHeaders($this->headers());
     }
 
     /**
@@ -110,6 +180,10 @@ final class WahaApiService
         ];
 
         $apiKey = (string) ($this->config->api_key ?? '');
+        if ($apiKey === '') {
+            $apiKey = trim((string) env('WAHA_API_KEY', ''));
+        }
+
         if ($apiKey !== '') {
             $headers['X-Api-Key'] = $apiKey;
         }

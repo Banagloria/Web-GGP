@@ -254,11 +254,30 @@
                     }
                 });
 
+                function resolveSubmitTrigger(form, submitEvent) {
+                    var submitter = submitEvent && submitEvent.submitter ? submitEvent.submitter : null;
+                    if (submitter instanceof HTMLElement && submitter.hasAttribute('data-admin-confirm-submit')) {
+                        return submitter;
+                    }
+
+                    // Fallback for browsers/events where submitter is unavailable.
+                    var active = document.activeElement;
+                    if (
+                        active instanceof HTMLElement &&
+                        active.form === form &&
+                        active.hasAttribute('data-admin-confirm-submit')
+                    ) {
+                        return active;
+                    }
+
+                    return null;
+                }
+
                 document.addEventListener('submit', function (e) {
                     var form = e.target;
                     if (!(form instanceof HTMLFormElement)) return;
                     if (form.dataset.adminConfirmBound === '1') return;
-                    var trigger = form.querySelector('[data-admin-confirm-submit]');
+                    var trigger = resolveSubmitTrigger(form, e);
                     if (!trigger) return;
                     e.preventDefault();
                     window.adminConfirm(optsFromTrigger(trigger)).then(function (ok) {

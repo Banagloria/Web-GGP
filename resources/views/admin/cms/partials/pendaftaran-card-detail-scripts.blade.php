@@ -44,12 +44,24 @@
         }
     }
 
+    function reindexSelectOptions(fieldRow, si, fi) {
+        fieldRow.querySelectorAll('[data-pendaftaran-select-option]').forEach(function (optRow, oi) {
+            optRow.querySelectorAll('input[name*="[select_options]"]').forEach(function (inp) {
+                inp.name = inp.name.replace(
+                    /\[select_options\]\[\d+\]/,
+                    '[select_options][' + oi + ']'
+                );
+            });
+        });
+    }
+
     function reindexFieldRows(wrap) {
         var si = wrap.getAttribute('data-section-index');
         wrap.querySelectorAll('[data-pendaftaran-field-row]').forEach(function (row, fi) {
             row.querySelectorAll('[name^="sections["]').forEach(function (el) {
                 el.name = el.name.replace(/sections\[\d+\]\[fields\]\[\d+\]/, 'sections[' + si + '][fields][' + fi + ']');
             });
+            reindexSelectOptions(row, si, fi);
             reindexFaIcons(row);
             syncFieldTypeUi(row);
         });
